@@ -1,0 +1,1510 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주간 보고 작성</title>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .app-header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
+    .header-sep { height: 22px; width: 1px; background: #3d5a80; margin: 0 2px; }
+    .header-label { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+    .header-input {
+      background: #2d4f7c;
+      border: 1px solid #4a6fa5;
+      color: #fff;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .header-input:focus { outline: 2px solid #60a5fa; outline-offset: 1px; }
+    .header-input::placeholder { color: #7b9cc0; }
+    #inp-month { width: 56px; }
+    #inp-week  { width: 56px; }
+    #inp-year  { width: 68px; }
+    .report-date {
+      font-size: 12px;
+      color: #93c5fd;
+      background: #1a3352;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .spacer { flex: 1; }
+    .saved-badge {
+      font-size: 11px;
+      color: #64748b;
+      background: #1a3352;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+    .saved-badge.flash { color: #86efac; }
+
+    .btn {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary   { background: #3b82f6; color: #fff; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-export    { background: #059669; color: #fff; }
+    .btn-export:hover { background: #047857; }
+    .btn-import    { background: #8b5cf6; color: #fff; }
+    .btn-import:hover { background: #7c3aed; }
+    .btn-reset     { background: #374151; color: #d1d5db; }
+    .btn-reset:hover { background: #4b5563; }
+
+    /* ── Content ── */
+    .content { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── Heading block (대제목) ── */
+    .heading-block {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 18px;
+      overflow: hidden;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    .heading-header {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .heading-input {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      padding: 4px 2px;
+      font-family: inherit;
+      letter-spacing: -0.2px;
+    }
+    .heading-input:focus { outline: none; border-bottom-color: #60a5fa; }
+    .heading-input::placeholder { color: #7b9cc0; }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+    .heading-header .btn-icon:hover { color: #fca5a5; background: rgba(255,255,255,0.1); }
+
+    .heading-body { padding: 4px 0; }
+
+    /* ── Subheading block (소제목) ── */
+    .subheading-block {
+      padding: 12px 16px 8px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .subheading-block:last-child { border-bottom: none; }
+
+    .subheading-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .subheading-bar {
+      width: 3px;
+      height: 16px;
+      background: #3b82f6;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .subheading-input {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      padding: 3px 2px;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .subheading-input:focus { outline: none; border-bottom-color: #3b82f6; }
+    .subheading-input::placeholder { color: #94a3b8; text-transform: none; }
+    .subheading-header .btn-icon { font-size: 15px; }
+    .subheading-header .btn-icon:hover { color: #ef4444; background: #fef2f2; }
+
+    /* ── Task rows ── */
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 5px;
+      margin-left: 12px;
+      animation: fadeIn 0.15s ease;
+    }
+    .task-input {
+      flex: 1;
+      padding: 5px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #1e293b;
+      background: #f8fafc;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+      resize: none;
+      overflow: hidden;
+      min-height: 30px;
+      line-height: 1.5;
+    }
+    .task-input:focus { outline: none; border-color: #3b82f6; background: #fff; }
+    .task-input::placeholder { color: #94a3b8; }
+
+    .status-select {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 74px;
+      background: #f8fafc;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .status-select:focus { outline: none; border-color: #3b82f6; }
+    .status-select[data-status="완료"]   { color: #16a34a; background: #f0fdf4; border-color: #86efac; }
+    .status-select[data-status="진행중"] { color: #1d4ed8; background: #eff6ff; border-color: #93c5fd; }
+    .status-select[data-status="예정"]   { color: #64748b; background: #f8fafc; border-color: #cbd5e1; }
+    .status-select[data-status="지연"]   { color: #dc2626; background: #fef2f2; border-color: #fca5a5; }
+
+    .assignee-select {
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 74px;
+      background: #f8fafc;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .assignee-select:focus { outline: none; border-color: #3b82f6; }
+
+    .btn-delete-task {
+      background: none; border: none; cursor: pointer; color: #cbd5e1;
+      font-size: 17px; padding: 2px 5px; border-radius: 4px; line-height: 1;
+      transition: color 0.15s, background 0.15s; flex-shrink: 0;
+    }
+    .btn-delete-task:hover { color: #ef4444; background: #fef2f2; }
+
+    /* ── Task wrapper (task + subtasks) ── */
+    .task-group {
+      margin-bottom: 6px;
+      margin-left: 12px;
+    }
+    .task-group > .task-row { margin-left: 0; margin-bottom: 3px; }
+
+    /* ── Subtask rows ── */
+    .subtask-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      margin-bottom: 4px;
+      margin-left: 22px;
+      animation: fadeIn 0.15s ease;
+    }
+    .subtask-row .task-input {
+      font-size: 12px;
+      min-height: 26px;
+      padding: 3px 8px;
+    }
+    .subtask-row .status-select { font-size: 10px; min-width: 64px; padding: 3px 5px; }
+    .subtask-row .btn-delete-task { font-size: 14px; padding: 1px 4px; }
+    .subtask-indicator {
+      color: #94a3b8;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    .btn-add-subtask {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 6px;
+      margin-left: 22px;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+    .btn-add-subtask:hover { color: #3b82f6; }
+
+    /* ── Add buttons ── */
+    .quick-add-input {
+      width: 100%;
+      padding: 5px 10px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #64748b;
+      background: transparent;
+      font-family: inherit;
+      transition: all 0.15s;
+      box-sizing: border-box;
+    }
+    .quick-add-input:focus { outline: none; border-color: #3b82f6; border-style: solid; background: #fff; color: #1e293b; }
+    .quick-add-input::placeholder { color: #94a3b8; }
+
+    .btn-add {
+      background: none;
+      border: 1px dashed #cbd5e1;
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: all 0.15s;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .btn-add:hover { border-color: #3b82f6; color: #2563eb; background: #eff6ff; }
+
+    .btn-add-heading {
+      background: none;
+      border: 2px dashed #cbd5e1;
+      color: #94a3b8;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-add-heading:hover { border-color: #1e3a5f; color: #1e3a5f; background: #fff; }
+
+    /* drag handle */
+    .drag-handle {
+      cursor: grab;
+      color: #7b9cc0;
+      font-size: 16px;
+      padding: 0 4px;
+      user-select: none;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .subheading-header .drag-handle { color: #94a3b8; font-size: 13px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      max-width: 360px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-left: 4px solid #22c55e; }
+    .toast.error   { border-left: 4px solid #ef4444; }
+
+    #file-import { display: none; }
+    #file-prev-import { display: none; }
+    .btn-load-prev {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px dashed #93c5fd;
+      color: #3b82f6;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+      margin-bottom: 14px;
+    }
+    .btn-load-prev:hover { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+
+    /* ── Settings modal ── */
+    .btn-settings { background: #475569; color: #e2e8f0; }
+    .btn-settings:hover { background: #64748b; }
+    .settings-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 9998;
+      justify-content: center;
+      align-items: center;
+    }
+    .settings-overlay.open { display: flex; }
+    .settings-panel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      padding: 28px 32px;
+      min-width: 420px;
+      max-width: 520px;
+      animation: fadeIn 0.15s ease;
+    }
+    .settings-panel h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .settings-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      min-width: 110px;
+      flex-shrink: 0;
+    }
+    .settings-folder-path {
+      flex: 1;
+      font-size: 12px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .settings-folder-path.empty { color: #94a3b8; font-style: italic; }
+    .btn-folder {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #3b82f6;
+      background: #eff6ff;
+      color: #2563eb;
+      font-family: inherit;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-folder:hover { background: #dbeafe; }
+    .btn-close-settings {
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: #1e3a5f;
+      color: #fff;
+      font-family: inherit;
+      transition: background 0.15s;
+      margin-top: 8px;
+    }
+    .btn-close-settings:hover { background: #2d4f7c; }
+    .settings-note {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>&#128203; 주간 보고</h1>
+  <div class="header-sep"></div>
+  <span class="header-label">연도</span>
+  <input type="number" id="inp-year" class="header-input" placeholder="2026" />
+  <span class="header-label">월</span>
+  <input type="number" id="inp-month" class="header-input" min="1" max="12" placeholder="4" />
+  <span class="header-label">주차</span>
+  <input type="number" id="inp-week" class="header-input" min="1" max="6" placeholder="3" />
+  <span class="report-date" id="report-date">보고 날짜: &#8212;</span>
+  <div class="spacer"></div>
+  <span class="saved-badge" id="saved-badge">자동 저장</span>
+  <button class="btn btn-primary" onclick="copyToClipboard()">&#128203; 클립보드 복사</button>
+  <button class="btn btn-export" onclick="exportJSON()">&#8595; Export</button>
+  <button class="btn btn-import" onclick="importFromFolder()">&#8593; Import</button>
+  <input type="file" id="file-import" accept=".json" onchange="importJSON(event)" />
+  <button class="btn btn-reset" onclick="resetAll()">초기화</button>
+  <button class="btn btn-settings" onclick="openSettings()">&#9881; Settings</button>
+</header>
+<input type="file" id="file-prev-import" accept=".json" onchange="handlePrevWeekFile(event)" />
+
+<main class="content" id="content"></main>
+
+<div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <h2>&#9881; Settings</h2>
+    <div class="settings-row">
+      <span class="settings-label">Export 폴더</span>
+      <span class="settings-folder-path empty" id="settings-folder-name">선택된 폴더 없음</span>
+      <button class="btn-folder" onclick="pickExportFolder()">폴더 선택</button>
+    </div>
+    <p class="settings-note">* Chrome / Edge에서만 지원됩니다. 폴더 선택 후 Export 시 해당 폴더에 자동 저장되고,<br>"지난주 불러오기" 시 해당 폴더의 JSON 파일 목록을 보여줍니다.</p>
+    <div style="text-align:right;margin-top:16px">
+      <button class="btn-close-settings" onclick="closeSettings()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var STATUS_OPTIONS = ['\uc608\uc815', '\uc9c4\ud589\uc911', '\uc644\ub8cc', '\uc9c0\uc5f0'];
+
+var STATUS_COLOR = {
+  '\uc608\uc815':  { text: '#4b5563', bg: '#f3f4f6' },
+  '\uc9c4\ud589\uc911': { text: '#1d4ed8', bg: '#dbeafe' },
+  '\uc644\ub8cc':  { text: '#15803d', bg: '#dcfce7' },
+  '\uc9c0\uc5f0':  { text: '#b91c1c', bg: '#fee2e2' }
+};
+
+var DEFAULT_HEADINGS = [
+  { title: '0. \ud68c\uc758 \uc6b4\uc601', subheadings: [] },
+  { title: '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d', subheadings: [] },
+  { title: '2. \uc774\ubc88 \uc8fc \uacc4\ud68d', subheadings: [] },
+  { title: '3. \uae30\ud0c0 (\uad50\uc721, \ud734\uac00 \uc77c\uc815)', subheadings: [] }
+];
+
+var STORAGE_KEY = 'weeklyReport_v2';
+
+/* ── FIREBASE ── */
+var firebaseConfig = {
+  apiKey: 'AIzaSyD09atAmnK_dltzJnT0iBW6YAPjU7nmJ0M',
+  authDomain: 'weekly-report-e3faa.firebaseapp.com',
+  databaseURL: 'https://weekly-report-e3faa-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'weekly-report-e3faa',
+  storageBucket: 'weekly-report-e3faa.firebasestorage.app',
+  messagingSenderId: '994072659880',
+  appId: '1:994072659880:web:f74bc93d6bf4666965bf9d'
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+var currentRef = null;
+var currentListener = null;
+var isRemoteUpdate = false;
+
+/* ── STATE ── */
+var state = createInitialState();
+
+function createInitialState() {
+  var now = new Date();
+  return {
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    week: '',
+    headings: JSON.parse(JSON.stringify(DEFAULT_HEADINGS))
+  };
+}
+
+/* ── LOCALSTORAGE (fallback) + FIREBASE ── */
+var saveTimer = null;
+
+function getDbPath() {
+  if (!state.year || !state.month || !state.week) return null;
+  return 'reports/' + state.year + '_' + state.month + '_' + state.week;
+}
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(commitSave, 400);
+}
+
+function commitSave() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {}
+  var path = getDbPath();
+  if (path) {
+    isRemoteUpdate = true;
+    db.ref(path).set(state).then(function() {
+      isRemoteUpdate = false;
+      flashSavedBadge('\ud074\ub77c\uc6b0\ub4dc \uc800\uc7a5 \u2713');
+    }).catch(function(err) {
+      isRemoteUpdate = false;
+      flashSavedBadge('\uc800\uc7a5 \uc2e4\ud328');
+      console.warn('Firebase save error:', err);
+    });
+  } else {
+    flashSavedBadge('\ub85c\uceec \uc800\uc7a5 \u2713');
+  }
+}
+
+function subscribeToReport() {
+  if (currentListener && currentRef) {
+    currentRef.off('value', currentListener);
+    currentListener = null;
+    currentRef = null;
+  }
+  var path = getDbPath();
+  if (!path) return;
+  currentRef = db.ref(path);
+  currentListener = currentRef.on('value', function(snapshot) {
+    if (isRemoteUpdate) return;
+    var data = snapshot.val();
+    if (data && Array.isArray(data.headings)) {
+      state = data;
+      renderAll();
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      flashSavedBadge('\ub3d9\uae30\ud654 \u2713');
+    }
+  });
+}
+
+function loadFromStorage() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    var saved = JSON.parse(raw);
+    if (saved && Array.isArray(saved.headings)) state = saved;
+  } catch (e) { console.warn('\ubd88\ub7ec\uc624\uae30 \uc2e4\ud328:', e); }
+}
+
+function flashSavedBadge(msg) {
+  var el = document.getElementById('saved-badge');
+  el.textContent = msg || '\uc800\uc7a5\ub428 \u2713';
+  el.classList.add('flash');
+  setTimeout(function() {
+    el.classList.remove('flash');
+    el.textContent = '\uc790\ub3d9 \uc800\uc7a5';
+  }, 1500);
+}
+
+function resetAll() {
+  if (!confirm('\ubaa8\ub4e0 \ub0b4\uc6a9\uc744 \ucd08\uae30\ud654\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n\uc800\uc7a5\ub41c \ub370\uc774\ud130\ub3c4 \ud568\uae30 \uc0ad\uc81c\ub429\ub2c8\ub2e4.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  var path = getDbPath();
+  if (path) db.ref(path).remove();
+  state = createInitialState();
+  renderAll();
+  subscribeToReport();
+  showToast('\ucd08\uae30\ud654\ub418\uc5c8\uc2b5\ub2c8\ub2e4.', 'success');
+}
+
+/* ── DATE CALCULATION ── */
+function calcReportMonday(year, month, week) {
+  if (!year || !month || !week) return null;
+  // 해당 월의 첫 번째 월요일 찾기
+  var firstDay = new Date(year, month - 1, 1);
+  var dow = firstDay.getDay(); // 0=Sun ... 6=Sat
+  var firstMonday = dow === 0 ? 2 : dow === 1 ? 1 : 9 - dow;
+  // N주차 월요일 = 첫 월요일 + (N-1)*7
+  var day = firstMonday + (week - 1) * 7;
+  return new Date(year, month - 1, day);
+}
+
+function updateReportDate() {
+  var el = document.getElementById('report-date');
+  var monday = calcReportMonday(state.year, state.month, state.week);
+  if (monday) {
+    var str = monday.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+    el.textContent = '\ubcf4\uace0 \ub0a0\uc9dc: ' + str;
+  } else {
+    el.textContent = '\ubcf4\uace0 \ub0a0\uc9dc: \u2014';
+  }
+}
+
+/* ── RENDER ── */
+function renderAll() {
+  syncHeader();
+  updateReportDate();
+  renderContent();
+}
+
+function syncHeader() {
+  document.getElementById('inp-year').value = state.year || '';
+  document.getElementById('inp-month').value = state.month || '';
+  document.getElementById('inp-week').value = state.week || '';
+}
+
+function renderContent() {
+  var el = document.getElementById('content');
+  var html = '<button class="btn-load-prev" onclick="loadPrevWeekFromFolder()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
+  state.headings.forEach(function(h, hi) {
+    html += renderHeading(h, hi);
+  });
+  html += '<button class="btn-add-heading" onclick="addHeading()">+ \ub300\uc81c\ubaa9 \ucd94\uac00</button>';
+  el.innerHTML = html;
+  resizeAllTextareas();
+}
+
+function renderHeading(h, hi) {
+  return '<div class="heading-block" id="heading-' + hi + '" ondragover="event.preventDefault()" ondrop="headingDrop(' + hi + ',event)">'
+    + '<div class="heading-header" draggable="true" ondragstart="headingDragStart(' + hi + ',event)">'
+    + '<span class="drag-handle">\u283f</span>'
+    + '<input type="text" class="heading-input" value="' + escAttr(h.title) + '"'
+    + ' placeholder="\ub300\uc81c\ubaa9\uc744 \uc785\ub825\ud558\uc138\uc694"'
+    + ' oninput="updateHeadingTitle(' + hi + ', this.value)" />'
+    + '<button class="btn-icon" onclick="deleteHeading(' + hi + ')" title="\ub300\uc81c\ubaa9 \uc0ad\uc81c">\xd7</button>'
+    + '</div>'
+    + '<div class="heading-body">'
+    + h.subheadings.map(function(sub, si) { return renderSubheading(hi, sub, si); }).join('')
+    + '<div style="padding:4px 16px 10px 16px;">'
+    + '<button class="btn-add" onclick="addSubheading(' + hi + ')">+ \uc18c\uc81c\ubaa9 \ucd94\uac00</button>'
+    + '</div></div></div>';
+}
+
+function renderSubheading(hi, sub, si) {
+  var assigneeOpts = ['', 'ALL', '\ubc15\uc138\uc9c4', '\uae40\uc120\uc601'].map(function(a) {
+    return '<option value="' + a + '"' + (a === (sub.assignee || '') ? ' selected' : '') + '>' + (a || '\ub2f4\ub2f9\uc790') + '</option>';
+  }).join('');
+  return '<div class="subheading-block" id="sub-' + hi + '-' + si + '" ondragover="event.preventDefault()" ondrop="subDrop(' + hi + ',' + si + ',event)">'
+    + '<div class="subheading-header" draggable="true" ondragstart="subDragStart(' + hi + ',' + si + ',event)">'
+    + '<span class="drag-handle">\u283f</span>'
+    + '<div class="subheading-bar"></div>'
+    + '<input type="text" class="subheading-input" value="' + escAttr(sub.title) + '"'
+    + ' placeholder="\uc18c\uc81c\ubaa9\uc744 \uc785\ub825\ud558\uc138\uc694"'
+    + ' oninput="updateSubTitle(' + hi + ',' + si + ',this.value)" />'
+    + '<select class="assignee-select" data-assignee="' + escAttr(sub.assignee || '') + '" onchange="updateSubAssignee(' + hi + ',' + si + ',this.value);this.dataset.assignee=this.value">'
+    + assigneeOpts + '</select>'
+    + '<button class="btn-icon" onclick="deleteSub(' + hi + ',' + si + ')" title="\uc18c\uc81c\ubaa9 \uc0ad\uc81c">\xd7</button>'
+    + '</div>'
+    + '<div class="task-list" id="tasks-' + hi + '-' + si + '">'
+    + (sub.tasks || []).map(function(t, ti) { return renderTask(hi, si, t, ti); }).join('')
+    + '</div>'
+    + '<div style="margin-left:12px;margin-top:4px;">'
+    + '<input type="text" class="quick-add-input" placeholder="+ \uc0c8 Task \uc785\ub825 \ud6c4 Enter" '
+    + 'onkeydown="quickAddTask(event,' + hi + ',' + si + ')" />'
+    + '</div></div>';
+}
+
+function renderTask(hi, si, task, ti) {
+  var opts = STATUS_OPTIONS.map(function(s) {
+    return '<option value="' + s + '"' + (s === task.status ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+  var subtasks = task.subtasks || [];
+  var subtaskHtml = subtasks.map(function(st, sti) {
+    return renderSubtask(hi, si, ti, st, sti);
+  }).join('');
+  return '<div class="task-group" id="taskgroup-' + hi + '-' + si + '-' + ti + '">'
+    + '<div class="task-row" id="task-' + hi + '-' + si + '-' + ti + '">'
+    + '<span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:20px;padding-top:6px;flex-shrink:0;">' + (ti + 1) + '.</span>'
+    + '<textarea class="task-input" rows="1"'
+    + ' placeholder="Task \ub0b4\uc6a9\uc744 \uc785\ub825\ud558\uc138\uc694"'
+    + ' oninput="updateTaskText(' + hi + ',' + si + ',' + ti + ',this.value);autoResize(this)"'
+    + ' onkeydown="taskKeyDown(event,' + hi + ',' + si + ',' + ti + ')">'
+    + escHtml(task.text)
+    + '</textarea>'
+    + '<select class="status-select" data-status="' + escAttr(task.status) + '"'
+    + ' onchange="updateTaskStatus(' + hi + ',' + si + ',' + ti + ',this.value);this.dataset.status=this.value">'
+    + opts + '</select>'
+    + '<button class="btn-delete-task" onclick="deleteTask(' + hi + ',' + si + ',' + ti + ')" title="\uc0ad\uc81c">\xd7</button>'
+    + '</div>'
+    + '<div class="subtask-list" id="subtasks-' + hi + '-' + si + '-' + ti + '">'
+    + subtaskHtml
+    + '</div>'
+    + '<button class="btn-add-subtask" onclick="addSubtask(' + hi + ',' + si + ',' + ti + ')">+ \uc138\ubd80 Task</button>'
+    + '</div>';
+}
+
+function renderSubtask(hi, si, ti, st, sti) {
+  return '<div class="subtask-row" id="subtask-' + hi + '-' + si + '-' + ti + '-' + sti + '">'
+    + '<span class="subtask-indicator">\u2514</span>'
+    + '<textarea class="task-input" rows="1"'
+    + ' placeholder="\uc138\ubd80 Task"'
+    + ' oninput="updateSubtaskText(' + hi + ',' + si + ',' + ti + ',' + sti + ',this.value);autoResize(this)">'
+    + escHtml(st.text)
+    + '</textarea>'
+    + '<button class="btn-delete-task" onclick="deleteSubtask(' + hi + ',' + si + ',' + ti + ',' + sti + ')" title="\uc0ad\uc81c">\xd7</button>'
+    + '</div>';
+}
+
+/* ── HEADING OPERATIONS ── */
+function addHeading() {
+  state.headings.push({ title: '', subheadings: [] });
+  renderContent();
+  scheduleSave();
+  var el = document.querySelector('#heading-' + (state.headings.length - 1) + ' .heading-input');
+  if (el) el.focus();
+}
+
+function deleteHeading(hi) {
+  if (!confirm('"' + (state.headings[hi].title || '(\ube44\uc5b4\uc788\uc74c)') + '"\uc744(\ub97c) \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) return;
+  state.headings.splice(hi, 1);
+  renderContent();
+  scheduleSave();
+}
+
+function updateHeadingTitle(hi, value) {
+  state.headings[hi].title = value;
+  scheduleSave();
+}
+
+/* ── DRAG AND DROP ── */
+var dragState = null;
+
+function headingDragStart(hi, event) {
+  dragState = { type: 'heading', index: hi };
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function headingDrop(targetHi, event) {
+  event.preventDefault();
+  if (!dragState || dragState.type !== 'heading') return;
+  var from = dragState.index;
+  dragState = null;
+  if (from === targetHi) return;
+  var item = state.headings.splice(from, 1)[0];
+  state.headings.splice(targetHi, 0, item);
+  renderContent();
+  scheduleSave();
+}
+
+function subDragStart(hi, si, event) {
+  dragState = { type: 'sub', heading: hi, index: si };
+  event.dataTransfer.effectAllowed = 'move';
+  event.stopPropagation();
+}
+
+function subDrop(targetHi, targetSi, event) {
+  event.preventDefault();
+  if (!dragState || dragState.type !== 'sub' || dragState.heading !== targetHi) return;
+  var from = dragState.index;
+  dragState = null;
+  if (from === targetSi) return;
+  var subs = state.headings[targetHi].subheadings;
+  var item = subs.splice(from, 1)[0];
+  subs.splice(targetSi, 0, item);
+  renderContent();
+  scheduleSave();
+}
+
+/* ── SUBHEADING OPERATIONS ── */
+function addSubheading(hi) {
+  state.headings[hi].subheadings.push({ title: '', assignee: '', tasks: [] });
+  renderContent();
+  scheduleSave();
+  var subs = state.headings[hi].subheadings;
+  var el = document.querySelector('#sub-' + hi + '-' + (subs.length - 1) + ' .subheading-input');
+  if (el) el.focus();
+}
+
+function deleteSub(hi, si) {
+  var sub = state.headings[hi].subheadings[si];
+  if (!confirm('"' + (sub.title || '(\ube44\uc5b4\uc788\uc74c)') + '"\uc744(\ub97c) \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) return;
+  state.headings[hi].subheadings.splice(si, 1);
+  renderContent();
+  scheduleSave();
+}
+
+function updateSubTitle(hi, si, value) {
+  state.headings[hi].subheadings[si].title = value;
+  scheduleSave();
+}
+
+function updateSubAssignee(hi, si, value) {
+  state.headings[hi].subheadings[si].assignee = value;
+  scheduleSave();
+}
+
+/* ── TASK OPERATIONS ── */
+function addTask(hi, si, initText) {
+  state.headings[hi].subheadings[si].tasks.push({ text: initText || '', status: '\uc608\uc815', subtasks: [] });
+  var tasks = state.headings[hi].subheadings[si].tasks;
+  var container = document.getElementById('tasks-' + hi + '-' + si);
+  var ti = tasks.length - 1;
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = renderTask(hi, si, tasks[ti], ti);
+  container.appendChild(wrapper.firstElementChild);
+  scheduleSave();
+  var inp = container.lastElementChild.querySelector('.task-input');
+  if (inp) { autoResize(inp); if (!initText) inp.focus(); }
+}
+
+function quickAddTask(e, hi, si) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  var text = e.target.value.trim();
+  if (!text) return;
+  e.target.value = '';
+  addTask(hi, si, text);
+}
+
+function taskKeyDown(e, hi, si, ti) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    var tasks = state.headings[hi].subheadings[si].tasks;
+    if (ti === tasks.length - 1) {
+      addTask(hi, si);
+    } else {
+      var nextGroup = document.getElementById('taskgroup-' + hi + '-' + si + '-' + (ti + 1));
+      if (nextGroup) { var inp = nextGroup.querySelector('.task-input'); if (inp) inp.focus(); }
+    }
+  }
+}
+
+function updateTaskText(hi, si, ti, value) {
+  state.headings[hi].subheadings[si].tasks[ti].text = value;
+  scheduleSave();
+}
+
+function updateTaskStatus(hi, si, ti, value) {
+  state.headings[hi].subheadings[si].tasks[ti].status = value;
+  scheduleSave();
+}
+
+function deleteTask(hi, si, ti) {
+  state.headings[hi].subheadings[si].tasks.splice(ti, 1);
+  var container = document.getElementById('tasks-' + hi + '-' + si);
+  container.innerHTML = state.headings[hi].subheadings[si].tasks
+    .map(function(t, idx) { return renderTask(hi, si, t, idx); }).join('');
+  resizeAllTextareas();
+  scheduleSave();
+}
+
+/* ── SUBTASK OPERATIONS ── */
+function addSubtask(hi, si, ti) {
+  var task = state.headings[hi].subheadings[si].tasks[ti];
+  if (!task.subtasks) task.subtasks = [];
+  task.subtasks.push({ text: '' });
+  var sti = task.subtasks.length - 1;
+  var container = document.getElementById('subtasks-' + hi + '-' + si + '-' + ti);
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = renderSubtask(hi, si, ti, task.subtasks[sti], sti);
+  container.appendChild(wrapper.firstElementChild);
+  scheduleSave();
+  var inp = container.lastElementChild.querySelector('.task-input');
+  if (inp) inp.focus();
+}
+
+function updateSubtaskText(hi, si, ti, sti, value) {
+  state.headings[hi].subheadings[si].tasks[ti].subtasks[sti].text = value;
+  scheduleSave();
+}
+
+function deleteSubtask(hi, si, ti, sti) {
+  state.headings[hi].subheadings[si].tasks[ti].subtasks.splice(sti, 1);
+  var container = document.getElementById('subtasks-' + hi + '-' + si + '-' + ti);
+  var task = state.headings[hi].subheadings[si].tasks[ti];
+  container.innerHTML = task.subtasks.map(function(st, idx) {
+    return renderSubtask(hi, si, ti, st, idx);
+  }).join('');
+  resizeAllTextareas();
+  scheduleSave();
+}
+
+/* ── HEADER INPUTS ── */
+document.getElementById('inp-year').addEventListener('input', function () {
+  state.year = parseInt(this.value) || '';
+  updateReportDate();
+  scheduleSave();
+  subscribeToReport();
+});
+document.getElementById('inp-month').addEventListener('input', function () {
+  state.month = parseInt(this.value) || '';
+  updateReportDate();
+  scheduleSave();
+  subscribeToReport();
+});
+document.getElementById('inp-week').addEventListener('input', function () {
+  state.week = parseInt(this.value) || '';
+  updateReportDate();
+  scheduleSave();
+  subscribeToReport();
+});
+
+/* ── EXPORT / IMPORT ── */
+function getExportFilename() {
+  var monthStr = state.month ? state.month + '\uc6d4' : '';
+  var weekStr = state.week ? state.week + '\uc8fc\ucc28' : '';
+  var yearStr = state.year || '';
+  return [yearStr, monthStr, weekStr, '\uc8fc\uac04\ubcf4\uace0'].filter(Boolean).join('_') + '.json';
+}
+
+function exportJSON() {
+  var data = JSON.parse(JSON.stringify(state));
+  var json = JSON.stringify(data, null, 2);
+  var filename = getExportFilename();
+
+  if (dirHandle) {
+    verifyDirPermission(dirHandle).then(function(ok) {
+      if (!ok) {
+        showToast('\u274c \ud3f4\ub354 \uad8c\ud55c\uc774 \uac70\ubd80\ub418\uc5c8\uc2b5\ub2c8\ub2e4. Settings\uc5d0\uc11c \ub2e4\uc2dc \uc120\ud0dd\ud558\uc138\uc694.', 'error');
+        return;
+      }
+      return dirHandle.getFileHandle(filename, { create: true }).then(function(fh) {
+        return fh.createWritable();
+      }).then(function(writable) {
+        return writable.write(json).then(function() { return writable.close(); });
+      }).then(function() {
+        showToast('\u2705 ' + dirHandle.name + '/' + filename + ' \uc800\uc7a5\ub428', 'success');
+      });
+    }).catch(function(err) {
+      showToast('\u274c \ud30c\uc77c \uc800\uc7a5 \uc2e4\ud328: ' + err.message, 'error');
+    });
+    return;
+  }
+
+  var blob = new Blob([json], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('\u2705 ' + filename + ' \ub2e4\uc6b4\ub85c\ub4dc\ub428', 'success');
+}
+
+function handlePrevWeekFile(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var prev = JSON.parse(e.target.result);
+      if (!prev || !Array.isArray(prev.headings)) {
+        showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON \ud30c\uc77c\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+        return;
+      }
+      loadPrevWeekPlan(prev);
+    } catch (err) {
+      showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function loadPrevWeekFromFolder() {
+  if (!dirHandle) {
+    document.getElementById('file-prev-import').click();
+    return;
+  }
+  verifyDirPermission(dirHandle).then(function(ok) {
+    if (!ok) {
+      showToast('\u274c \ud3f4\ub354 \uad8c\ud55c\uc774 \uac70\ubd80\ub418\uc5c8\uc2b5\ub2c8\ub2e4. Settings\uc5d0\uc11c \ub2e4\uc2dc \uc120\ud0dd\ud558\uc138\uc694.', 'error');
+      document.getElementById('file-prev-import').click();
+      return;
+    }
+    var files = [];
+    var iter = dirHandle.values();
+    function collect(result) {
+      if (result.done) {
+        files.sort(function(a, b) { return b.name.localeCompare(a.name); });
+        if (files.length === 0) {
+          showToast('\u274c \ud3f4\ub354\uc5d0 JSON \ud30c\uc77c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+          return;
+        }
+        showFilePickerModal(files);
+        return;
+      }
+      if (result.value.kind === 'file' && result.value.name.endsWith('.json')) {
+        files.push(result.value);
+      }
+      iter.next().then(collect);
+    }
+    iter.next().then(collect);
+  }).catch(function(err) {
+    showToast('\u274c \ud3f4\ub354 \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
+    document.getElementById('file-prev-import').click();
+  });
+}
+
+function showFilePickerModal(fileHandles) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;justify-content:center;align-items:center;';
+  var panel = document.createElement('div');
+  panel.style.cssText = 'background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:24px 28px;min-width:380px;max-width:500px;max-height:70vh;display:flex;flex-direction:column;';
+  panel.innerHTML = '<h3 style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">\ud83d\udcc2 \uc9c0\ub09c\uc8fc JSON \ud30c\uc77c \uc120\ud0dd</h3>'
+    + '<div id="file-list" style="flex:1;overflow-y:auto;margin-bottom:14px;"></div>'
+    + '<div style="text-align:right;"><button id="fp-cancel" style="padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#475569;color:#fff;font-family:inherit;">\ub2eb\uae30</button></div>';
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) { document.body.removeChild(overlay); } });
+  panel.querySelector('#fp-cancel').onclick = function() { document.body.removeChild(overlay); };
+  var list = panel.querySelector('#file-list');
+  fileHandles.forEach(function(fh) {
+    var btn = document.createElement('button');
+    btn.textContent = fh.name;
+    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
+    btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
+    btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
+    btn.onclick = function() {
+      fh.getFile().then(function(file) {
+        return file.text();
+      }).then(function(text) {
+        var prev = JSON.parse(text);
+        if (!prev || !Array.isArray(prev.headings)) {
+          showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+          return;
+        }
+        loadPrevWeekPlan(prev);
+        document.body.removeChild(overlay);
+      }).catch(function(err) {
+        showToast('\u274c \ud30c\uc77c \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
+      });
+    };
+    list.appendChild(btn);
+  });
+}
+
+function loadPrevWeekPlan(prev) {
+  // \uc9c0\ub09c\uc8fc JSON\uc5d0\uc11c "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ud5e4\ub529 \ucc3e\uae30
+  var planHeading = null;
+  for (var i = 0; i < prev.headings.length; i++) {
+    if (prev.headings[i].title.indexOf('\uc774\ubc88 \uc8fc \uacc4\ud68d') !== -1) {
+      planHeading = prev.headings[i];
+      break;
+    }
+  }
+  if (!planHeading || !planHeading.subheadings || planHeading.subheadings.length === 0) {
+    showToast('\u274c \uc9c0\ub09c\uc8fc \ud30c\uc77c\uc5d0 "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ub0b4\uc6a9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+    return;
+  }
+  // \ud604\uc7ac state\uc5d0\uc11c "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ud5e4\ub529 \ucc3e\uae30
+  var targetIdx = -1;
+  for (var j = 0; j < state.headings.length; j++) {
+    if (state.headings[j].title.indexOf('\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d') !== -1) {
+      targetIdx = j;
+      break;
+    }
+  }
+  if (targetIdx === -1) {
+    showToast('\u274c "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ub300\uc81c\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+    return;
+  }
+  // \ubcf5\uc0ac\ud558\uba74\uc11c \uc0c1\ud0dc\ub97c "\uc608\uc815"\uc73c\ub85c \ucd08\uae30\ud654\ud558\uc9c0 \uc54a\uace0 \uadf8\ub300\ub85c \uac00\uc838\uc624\uae30
+  var copied = JSON.parse(JSON.stringify(planHeading.subheadings));
+  if (state.headings[targetIdx].subheadings.length > 0) {
+    if (!confirm('"\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d"\uc5d0 \uc774\ubbf8 \ub0b4\uc6a9\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\uae30\uc874 \ub0b4\uc6a9\uc744 \ub300\uccb4\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n(\ucde8\uc18c \uc2dc \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00\ub429\ub2c8\ub2e4)')) {
+      // \ucde8\uc18c = \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00
+      state.headings[targetIdx].subheadings = state.headings[targetIdx].subheadings.concat(copied);
+    } else {
+      // \ud655\uc778 = \ub300\uccb4
+      state.headings[targetIdx].subheadings = copied;
+    }
+  } else {
+    state.headings[targetIdx].subheadings = copied;
+  }
+  renderContent();
+  commitSave();
+  showToast('\u2705 \uc9c0\ub09c\uc8fc "\uc774\ubc88 \uc8fc \uacc4\ud68d" \u2192 "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ubd88\ub7ec\uc634', 'success');
+}
+
+function importJSON(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!data || !Array.isArray(data.headings)) {
+        showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON \ud30c\uc77c\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+        return;
+      }
+      state = data;
+      renderAll();
+      commitSave();
+      subscribeToReport();
+      showToast('\u2705 \ubd88\ub7ec\uc624\uae30 \uc644\ub8cc', 'success');
+    } catch (err) {
+      showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function importFromFolder() {
+  if (!dirHandle) {
+    document.getElementById('file-import').click();
+    return;
+  }
+  verifyDirPermission(dirHandle).then(function(ok) {
+    if (!ok) {
+      document.getElementById('file-import').click();
+      return;
+    }
+    var files = [];
+    var iter = dirHandle.values();
+    function collect(result) {
+      if (result.done) {
+        files.sort(function(a, b) { return b.name.localeCompare(a.name); });
+        if (files.length === 0) {
+          showToast('\u274c \ud3f4\ub354\uc5d0 JSON \ud30c\uc77c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+          return;
+        }
+        showImportPickerModal(files);
+        return;
+      }
+      if (result.value.kind === 'file' && result.value.name.endsWith('.json')) {
+        files.push(result.value);
+      }
+      iter.next().then(collect);
+    }
+    iter.next().then(collect);
+  }).catch(function() {
+    document.getElementById('file-import').click();
+  });
+}
+
+function showImportPickerModal(fileHandles) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;justify-content:center;align-items:center;';
+  var panel = document.createElement('div');
+  panel.style.cssText = 'background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:24px 28px;min-width:380px;max-width:500px;max-height:70vh;display:flex;flex-direction:column;';
+  panel.innerHTML = '<h3 style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">\ud83d\udcc2 Import \ud30c\uc77c \uc120\ud0dd</h3>'
+    + '<div id="import-list" style="flex:1;overflow-y:auto;margin-bottom:14px;"></div>'
+    + '<div style="text-align:right;"><button id="imp-cancel" style="padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#475569;color:#fff;font-family:inherit;">\ub2eb\uae30</button></div>';
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+  panel.querySelector('#imp-cancel').onclick = function() { document.body.removeChild(overlay); };
+  var list = panel.querySelector('#import-list');
+  fileHandles.forEach(function(fh) {
+    var btn = document.createElement('button');
+    btn.textContent = fh.name;
+    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
+    btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
+    btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
+    btn.onclick = function() {
+      fh.getFile().then(function(file) { return file.text(); }).then(function(text) {
+        var data = JSON.parse(text);
+        if (!data || !Array.isArray(data.headings)) {
+          showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+          return;
+        }
+        state = data;
+        renderAll();
+        commitSave();
+        subscribeToReport();
+        showToast('\u2705 ' + fh.name + ' \ubd88\ub7ec\uc624\uae30 \uc644\ub8cc', 'success');
+        document.body.removeChild(overlay);
+      }).catch(function(err) {
+        showToast('\u274c \ud30c\uc77c \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
+      });
+    };
+    list.appendChild(btn);
+  });
+}
+
+/* ── CLIPBOARD EXPORT ── */
+function getWeekLabel() {
+  var m = state.month ? state.month + '\uc6d4' : '';
+  var w = state.week ? state.week + '\uc8fc\ucc28' : '';
+  return [m, w].filter(Boolean).join(' ') || 'N\uc8fc\ucc28';
+}
+
+function getReportDateStr() {
+  var monday = calcReportMonday(state.year, state.month, state.week);
+  if (!monday) return '';
+  return monday.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function buildExportHTML() {
+  var weekLabel = getWeekLabel();
+  var dateLabel = getReportDateStr();
+  var titleStr = dateLabel ? weekLabel + ' (' + dateLabel + ')' : weekLabel;
+
+  var html = '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',\'Malgun Gothic\',sans-serif;color:#1e293b;line-height:1.7;">'
+    + '<h2 style="font-size:16px;font-weight:800;color:#1e3a5f;margin-bottom:16px;">'
+    + escHtml(titleStr) + '</h2>';
+
+  state.headings.forEach(function(h) {
+    if (!headingHasTasks(h)) return;
+    html += '<h3 style="font-size:14px;font-weight:700;color:#1e3a5f;margin:18px 0 8px;">' + escHtml(h.title) + '</h3>';
+    h.subheadings.forEach(function(sub) {
+      if (!sub.tasks || sub.tasks.length === 0) return;
+      var assigneeStr = sub.assignee ? ' - ' + escHtml(sub.assignee) : '';
+      html += '<h4 style="font-size:13px;font-weight:700;color:#475569;margin:10px 0 4px;">'
+        + escHtml(sub.title) + assigneeStr + '</h4>';
+      html += '<ol style="margin:0 0 6px 0;padding-left:22px;font-size:13px;">';
+      sub.tasks.forEach(function(t) {
+        var c = STATUS_COLOR[t.status] || STATUS_COLOR['\uc608\uc815'];
+        var statusBadge = ' <span style="font-size:11px;color:' + c.text + ';font-weight:700;">- ' + escHtml(t.status) + '</span>';
+        html += '<li style="margin-bottom:3px;">' + escHtml(t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + statusBadge;
+        if (t.subtasks && t.subtasks.length > 0) {
+          html += '<ul style="margin:2px 0 2px 0;padding-left:18px;font-size:12px;color:#475569;">';
+          t.subtasks.forEach(function(st) {
+            html += '<li style="margin-bottom:1px;">' + escHtml(st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '</li>';
+          });
+          html += '</ul>';
+        }
+        html += '</li>';
+      });
+      html += '</ol>';
+    });
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function buildExportPlainText() {
+  var weekLabel = getWeekLabel();
+  var dateLabel = getReportDateStr();
+  var titleStr = dateLabel ? weekLabel + ' (' + dateLabel + ')' : weekLabel;
+  var text = titleStr + '\n\n';
+
+  state.headings.forEach(function(h) {
+    if (!headingHasTasks(h)) return;
+    text += h.title + '\n';
+    h.subheadings.forEach(function(sub) {
+      if (!sub.tasks || sub.tasks.length === 0) return;
+      var assigneeStr = sub.assignee ? ' - ' + sub.assignee : '';
+      text += '\n' + sub.title + assigneeStr + '\n';
+      var taskNum = 0;
+      sub.tasks.forEach(function(t) {
+        taskNum++;
+        text += '  ' + taskNum + '. ' + (t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + ' - ' + t.status + '\n';
+        if (t.subtasks && t.subtasks.length > 0) {
+          t.subtasks.forEach(function(st) {
+            text += '    - ' + (st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '\n';
+          });
+        }
+      });
+    });
+    text += '\n';
+  });
+  return text;
+}
+
+async function copyToClipboard() {
+  var htmlContent = buildExportHTML();
+  var plainContent = buildExportPlainText();
+  try {
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html':  new Blob([htmlContent],  { type: 'text/html' }),
+          'text/plain': new Blob([plainContent], { type: 'text/plain' })
+        })
+      ]);
+    } else {
+      await navigator.clipboard.writeText(plainContent);
+    }
+    showToast('\u2705 \ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428! Loop\uc5d0 Ctrl+V\ub85c \ubd99\uc5ec\ub123\uae30\ud558\uc138\uc694.', 'success');
+  } catch (e) {
+    console.error('clipboard error:', e);
+    showToast('\u274c \ubcf5\uc0ac \uc2e4\ud328. \ube0c\ub77c\uc6b0\uc800 \uad8c\ud55c\uc744 \ud655\uc778\ud558\uc138\uc694.', 'error');
+  }
+}
+
+/* ── TOAST ── */
+var toastTimer = null;
+function showToast(msg, type) {
+  type = type || 'success';
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3500);
+}
+
+/* ── UTILS ── */
+function headingHasTasks(h) {
+  return h.subheadings.some(function(sub) { return sub.tasks && sub.tasks.length > 0; });
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function resizeAllTextareas() {
+  document.querySelectorAll('.task-input').forEach(function(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ── INIT ── */
+var dirHandle = null;
+var DB_NAME = 'weeklyReportSettings';
+var DB_STORE = 'handles';
+
+function openSettingsDB() {
+  return new Promise(function(resolve, reject) {
+    var req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function() { req.result.createObjectStore(DB_STORE); };
+    req.onsuccess = function() { resolve(req.result); };
+    req.onerror = function() { reject(req.error); };
+  });
+}
+
+function saveDirHandle(handle) {
+  return openSettingsDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readwrite');
+      tx.objectStore(DB_STORE).put(handle, 'exportDir');
+      tx.oncomplete = function() { resolve(); };
+      tx.onerror = function() { reject(tx.error); };
+    });
+  });
+}
+
+function loadDirHandle() {
+  return openSettingsDB().then(function(db) {
+    return new Promise(function(resolve, reject) {
+      var tx = db.transaction(DB_STORE, 'readonly');
+      var req = tx.objectStore(DB_STORE).get('exportDir');
+      req.onsuccess = function() { resolve(req.result || null); };
+      req.onerror = function() { reject(req.error); };
+    });
+  });
+}
+
+function updateFolderDisplay() {
+  var el = document.getElementById('settings-folder-name');
+  if (dirHandle) {
+    el.textContent = dirHandle.name;
+    el.classList.remove('empty');
+  } else {
+    el.textContent = '\uc120\ud0dd\ub41c \ud3f4\ub354 \uc5c6\uc74c';
+    el.classList.add('empty');
+  }
+}
+
+function openSettings() {
+  document.getElementById('settings-overlay').classList.add('open');
+  updateFolderDisplay();
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+
+function pickExportFolder() {
+  if (!window.showDirectoryPicker) {
+    showToast('\u274c \uc774 \ube0c\ub77c\uc6b0\uc800\ub294 \ud3f4\ub354 \uc120\ud0dd\uc744 \uc9c0\uc6d0\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. Chrome/Edge\ub97c \uc0ac\uc6a9\ud558\uc138\uc694.', 'error');
+    return;
+  }
+  window.showDirectoryPicker({ mode: 'readwrite' }).then(function(handle) {
+    dirHandle = handle;
+    updateFolderDisplay();
+    return saveDirHandle(handle);
+  }).then(function() {
+    showToast('\u2705 Export \ud3f4\ub354: ' + dirHandle.name, 'success');
+  }).catch(function(err) {
+    if (err.name !== 'AbortError') showToast('\u274c \ud3f4\ub354 \uc120\ud0dd \uc2e4\ud328: ' + err.message, 'error');
+  });
+}
+
+function verifyDirPermission(handle) {
+  return handle.queryPermission({ mode: 'readwrite' }).then(function(perm) {
+    if (perm === 'granted') return true;
+    return handle.requestPermission({ mode: 'readwrite' }).then(function(p) { return p === 'granted'; });
+  });
+}
+
+function initDirHandle() {
+  loadDirHandle().then(function(handle) {
+    if (handle) {
+      dirHandle = handle;
+      updateFolderDisplay();
+    }
+  }).catch(function() {});
+}
+
+loadFromStorage();
+renderAll();
+initDirHandle();
+
+/* Firebase: 초기 데이터 로드 */
+(function() {
+  var path = getDbPath();
+  if (path) {
+    db.ref(path).once('value').then(function(snapshot) {
+      var data = snapshot.val();
+      if (data && Array.isArray(data.headings)) {
+        state = data;
+        renderAll();
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      }
+      subscribeToReport();
+    }).catch(function() {
+      subscribeToReport();
+    });
+  } else {
+    subscribeToReport();
+  }
+})();
+</script>
+</body>
+</html>
