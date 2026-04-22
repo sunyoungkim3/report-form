@@ -618,17 +618,29 @@ function subscribeToReport() {
   var path = getDbPath();
   if (!path) return;
   currentRef = db.ref(path);
-  currentListener = currentRef.on('value', function(snapshot) {
+  // 먼저 한 번 기존 데이터를 불러오고 리스너 연결
+  currentRef.once('value').then(function(snapshot) {
     var data = snapshot.val();
-    if (!data || !Array.isArray(data.headings)) return;
-    var incomingJSON = JSON.stringify(data);
-    if (incomingJSON === lastSavedJSON) return;
-    if (incomingJSON === JSON.stringify(state)) return;
-    state = data;
-    lastSavedJSON = incomingJSON;
-    renderAll();
-    try { localStorage.setItem(STORAGE_KEY, incomingJSON); } catch(e) {}
-    flashSavedBadge('\ub3d9\uae30\ud654 \u2713');
+    if (data && Array.isArray(data.headings)) {
+      state = data;
+      lastSavedJSON = JSON.stringify(data);
+      renderAll();
+      try { localStorage.setItem(STORAGE_KEY, lastSavedJSON); } catch(e) {}
+      flashSavedBadge('\ub370\uc774\ud130 \ub85c\ub4dc \u2713');
+    }
+    // 리스너 연결 (이후 실시간 변경 감지)
+    currentListener = currentRef.on('value', function(snapshot) {
+      var data = snapshot.val();
+      if (!data || !Array.isArray(data.headings)) return;
+      var incomingJSON = JSON.stringify(data);
+      if (incomingJSON === lastSavedJSON) return;
+      if (incomingJSON === JSON.stringify(state)) return;
+      state = data;
+      lastSavedJSON = incomingJSON;
+      renderAll();
+      try { localStorage.setItem(STORAGE_KEY, incomingJSON); } catch(e) {}
+      flashSavedBadge('\ub3d9\uae30\ud654 \u2713');
+    });
   });
 }
 
@@ -968,19 +980,22 @@ function deleteSubtask(hi, si, ti, sti) {
 document.getElementById('inp-year').addEventListener('input', function () {
   state.year = parseInt(this.value) || '';
   updateReportDate();
-  scheduleSave();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  lastSavedJSON = '';
   subscribeToReport();
 });
 document.getElementById('inp-month').addEventListener('input', function () {
   state.month = parseInt(this.value) || '';
   updateReportDate();
-  scheduleSave();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  lastSavedJSON = '';
   subscribeToReport();
 });
 document.getElementById('inp-week').addEventListener('input', function () {
   state.week = parseInt(this.value) || '';
   updateReportDate();
-  scheduleSave();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+  lastSavedJSON = '';
   subscribeToReport();
 });
 
