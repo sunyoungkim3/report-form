@@ -560,7 +560,8 @@ firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 var currentRef = null;
 var currentListener = null;
-var isRemoteUpdate = false;
+var lastSavedJSON = '';
+var isSaving = false;
 
 /* ── STATE ── */
 var state = createInitialState();
@@ -589,17 +590,17 @@ function scheduleSave() {
 }
 
 function commitSave() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {}
+  var json = JSON.stringify(state);
+  try { localStorage.setItem(STORAGE_KEY, json); } catch (e) {}
   var path = getDbPath();
   if (path) {
-    isRemoteUpdate = true;
+    lastSavedJSON = json;
+    isSaving = true;
     db.ref(path).set(state).then(function() {
-      isRemoteUpdate = false;
+      isSaving = false;
       flashSavedBadge('\ud074\ub77c\uc6b0\ub4dc \uc800\uc7a5 \u2713');
     }).catch(function(err) {
-      isRemoteUpdate = false;
+      isSaving = false;
       flashSavedBadge('\uc800\uc7a5 \uc2e4\ud328');
       console.warn('Firebase save error:', err);
     });
@@ -618,14 +619,16 @@ function subscribeToReport() {
   if (!path) return;
   currentRef = db.ref(path);
   currentListener = currentRef.on('value', function(snapshot) {
-    if (isRemoteUpdate) return;
     var data = snapshot.val();
-    if (data && Array.isArray(data.headings)) {
-      state = data;
-      renderAll();
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-      flashSavedBadge('\ub3d9\uae30\ud654 \u2713');
-    }
+    if (!data || !Array.isArray(data.headings)) return;
+    var incomingJSON = JSON.stringify(data);
+    if (incomingJSON === lastSavedJSON) return;
+    if (incomingJSON === JSON.stringify(state)) return;
+    state = data;
+    lastSavedJSON = incomingJSON;
+    renderAll();
+    try { localStorage.setItem(STORAGE_KEY, incomingJSON); } catch(e) {}
+    flashSavedBadge('\ub3d9\uae30\ud654 \u2713');
   });
 }
 
