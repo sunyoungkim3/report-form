@@ -1070,35 +1070,41 @@ function loadPrevWeekFromFolder() {
   }
   verifyDirPermission(dirHandle).then(function(ok) {
     if (!ok) {
-      showToast('\u274c \ud3f4\ub354 \uad8c\ud55c\uc774 \uac70\ubd80\ub418\uc5c8\uc2b5\ub2c8\ub2e4. Settings\uc5d0\uc11c \ub2e4\uc2dc \uc120\ud0dd\ud558\uc138\uc694.', 'error');
       document.getElementById('file-prev-import').click();
       return;
     }
-    var files = [];
+    var filePromises = [];
     var iter = dirHandle.values();
     function collect(result) {
       if (result.done) {
-        files.sort(function(a, b) { return b.name.localeCompare(a.name); });
-        if (files.length === 0) {
-          showToast('\u274c \ud3f4\ub354\uc5d0 JSON \ud30c\uc77c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
-          return;
-        }
-        showFilePickerModal(files);
+        // \ubaa8\ub4e0 File \uac1d\uccb4 \uc5bb\uae30 \uc644\ub8cc \ud6c4 \ubaa8\ub2ec \ud45c\uc2dc
+        Promise.all(filePromises).then(function(files) {
+          var sorted = files.filter(Boolean).sort(function(a, b) { return b.name.localeCompare(a.name); });
+          if (sorted.length === 0) {
+            showToast('\u274c \ud3f4\ub354\uc5d0 JSON \ud30c\uc77c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+            return;
+          }
+          showFilePickerModal(sorted);
+        }).catch(function() {
+          document.getElementById('file-prev-import').click();
+        });
         return;
       }
       if (result.value.kind === 'file' && result.value.name.endsWith('.json')) {
-        files.push(result.value);
+        // \ud578\ub4e4\uc774 \uc720\ud6a8\ud55c \ub3d9\uc548 \uc989\uc2dc File \uac1d\uccb4\ub85c \ubcc0\ud658
+        filePromises.push(result.value.getFile().catch(function() { return null; }));
       }
       iter.next().then(collect);
     }
-    iter.next().then(collect);
-  }).catch(function(err) {
-    showToast('\u274c \ud3f4\ub354 \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
+    iter.next().then(collect).catch(function() {
+      document.getElementById('file-prev-import').click();
+    });
+  }).catch(function() {
     document.getElementById('file-prev-import').click();
   });
 }
 
-function showFilePickerModal(fileHandles) {
+function showFilePickerModal(files) {
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;justify-content:center;align-items:center;';
   var panel = document.createElement('div');
@@ -1111,26 +1117,28 @@ function showFilePickerModal(fileHandles) {
   overlay.addEventListener('click', function(e) { if (e.target === overlay) { document.body.removeChild(overlay); } });
   panel.querySelector('#fp-cancel').onclick = function() { document.body.removeChild(overlay); };
   var list = panel.querySelector('#file-list');
-  fileHandles.forEach(function(fh) {
+  files.forEach(function(file) {
     var btn = document.createElement('button');
-    btn.textContent = fh.name;
+    btn.textContent = file.name;
     btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
     btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
     btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
     btn.onclick = function() {
-      fh.getFile().then(function(file) {
-        return file.text();
-      }).then(function(text) {
-        var prev = JSON.parse(text);
-        if (!prev || !Array.isArray(prev.headings)) {
-          showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
-          return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var prev = JSON.parse(e.target.result);
+          if (!prev || !Array.isArray(prev.headings)) {
+            showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+            return;
+          }
+          loadPrevWeekPlan(prev);
+          document.body.removeChild(overlay);
+        } catch(err) {
+          showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + err.message, 'error');
         }
-        loadPrevWeekPlan(prev);
-        document.body.removeChild(overlay);
-      }).catch(function(err) {
-        showToast('\u274c \ud30c\uc77c \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
-      });
+      };
+      reader.readAsText(file, 'UTF-8');
     };
     list.appendChild(btn);
   });
