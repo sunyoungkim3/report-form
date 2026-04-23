@@ -731,7 +731,7 @@ function syncHeader() {
 
 function renderContent() {
   var el = document.getElementById('content');
-  var html = '<button class="btn-load-prev" onclick="loadPrevWeekFromFirebase()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
+  var html = '<button class="btn-load-prev" onclick="loadPrevWeek()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
   state.headings.forEach(function(h, hi) {
     html += renderHeading(h, hi);
   });
@@ -1093,6 +1093,14 @@ function getPrevWeekPath() {
     w = 5;
   }
   return 'reports/' + y + '_' + m + '_' + w;
+}
+
+function loadPrevWeek() {
+  if (dirHandle) {
+    loadPrevWeekFromFolder();
+  } else {
+    loadPrevWeekFromFirebase();
+  }
 }
 
 function loadPrevWeekFromFirebase() {
