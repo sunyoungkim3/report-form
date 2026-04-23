@@ -712,7 +712,7 @@ function syncHeader() {
 
 function renderContent() {
   var el = document.getElementById('content');
-  var html = '<button class="btn-load-prev" onclick="loadPrevWeekFromFolder()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
+  var html = '<button class="btn-load-prev" onclick="loadPrevWeekFromFirebase()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
   state.headings.forEach(function(h, hi) {
     html += renderHeading(h, hi);
   });
@@ -1061,6 +1061,52 @@ function handlePrevWeekFile(event) {
   };
   reader.readAsText(file, 'UTF-8');
   event.target.value = '';
+}
+
+function getPrevWeekPath() {
+  if (!state.year || !state.month || !state.week) return null;
+  var y = state.year;
+  var m = state.month;
+  var w = state.week - 1;
+  if (w < 1) {
+    m = m - 1;
+    if (m < 1) { m = 12; y = y - 1; }
+    w = 5;
+  }
+  return 'reports/' + y + '_' + m + '_' + w;
+}
+
+function loadPrevWeekFromFirebase() {
+  var path = getPrevWeekPath();
+  if (!path) {
+    showToast('\u274c \uc5f0\ub3c4/\uc6d4/\uc8fc\ucc28\ub97c \uba3c\uc800 \uc785\ub825\ud558\uc138\uc694.', 'error');
+    return;
+  }
+  flashSavedBadge('\uc9c0\ub09c\uc8fc \ub370\uc774\ud130 \ub85c\ub529...');
+  db.ref(path).once('value').then(function(snapshot) {
+    var prev = snapshot.val();
+    if (!prev || !Array.isArray(prev.headings)) {
+      // 5\uc8fc\ucc28 \ub370\uc774\ud130 \uc5c6\uc73c\uba74 4\uc8fc\ucc28\ub85c \uc7ac\uc2dc\ub3c4
+      var w = parseInt(path.split('_')[2]);
+      if (w === 5) {
+        var parts = path.split('_');
+        var fallback = parts[0] + '_' + parts[1] + '_4';
+        return db.ref(fallback).once('value').then(function(snap2) {
+          var prev2 = snap2.val();
+          if (!prev2 || !Array.isArray(prev2.headings)) {
+            showToast('\u274c \uc9c0\ub09c\uc8fc \ub370\uc774\ud130\uac00 Firebase\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+            return;
+          }
+          loadPrevWeekPlan(prev2);
+        });
+      }
+      showToast('\u274c \uc9c0\ub09c\uc8fc \ub370\uc774\ud130\uac00 Firebase\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+      return;
+    }
+    loadPrevWeekPlan(prev);
+  }).catch(function(err) {
+    showToast('\u274c Firebase \ub85c\ub4dc \uc2e4\ud328: ' + err.message, 'error');
+  });
 }
 
 function loadPrevWeekFromFolder() {
