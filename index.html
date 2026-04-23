@@ -1059,7 +1059,7 @@ function handlePrevWeekFile(event) {
       showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + err.message, 'error');
     }
   };
-  reader.readAsText(file);
+  reader.readAsText(file, 'UTF-8');
   event.target.value = '';
 }
 
@@ -1137,22 +1137,25 @@ function showFilePickerModal(fileHandles) {
 }
 
 function loadPrevWeekPlan(prev) {
-  // \uc9c0\ub09c\uc8fc JSON\uc5d0\uc11c "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ud5e4\ub529 \ucc3e\uae30
+  // \uc9c0\ub09c\uc8fc JSON\uc5d0\uc11c "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ud5e4\ub529 \ucc3e\uae30 (\ucf54\uc5b4 \ub2e8\uc5b4\ub9cc \uccb4\ud06c)
   var planHeading = null;
   for (var i = 0; i < prev.headings.length; i++) {
-    if (prev.headings[i].title.indexOf('\uc774\ubc88 \uc8fc \uacc4\ud68d') !== -1) {
+    var t = prev.headings[i].title || '';
+    if (t.indexOf('\uc774\ubc88') !== -1 && t.indexOf('\uacc4\ud68d') !== -1) {
       planHeading = prev.headings[i];
       break;
     }
   }
-  if (!planHeading || !planHeading.subheadings || planHeading.subheadings.length === 0) {
-    showToast('\u274c \uc9c0\ub09c\uc8fc \ud30c\uc77c\uc5d0 "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ub0b4\uc6a9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+  if (!planHeading) {
+    showToast('\u274c \uc9c0\ub09c\uc8fc \ud30c\uc77c\uc5d0 "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ub300\uc81c\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
     return;
   }
+  var copied = JSON.parse(JSON.stringify(planHeading.subheadings || []));
   // \ud604\uc7ac state\uc5d0\uc11c "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ud5e4\ub529 \ucc3e\uae30
   var targetIdx = -1;
   for (var j = 0; j < state.headings.length; j++) {
-    if (state.headings[j].title.indexOf('\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d') !== -1) {
+    var t2 = state.headings[j].title || '';
+    if (t2.indexOf('\uc9c0\ub09c') !== -1 && t2.indexOf('\uc9c4\ud589') !== -1) {
       targetIdx = j;
       break;
     }
@@ -1161,14 +1164,10 @@ function loadPrevWeekPlan(prev) {
     showToast('\u274c "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ub300\uc81c\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
     return;
   }
-  // \ubcf5\uc0ac\ud558\uba74\uc11c \uc0c1\ud0dc\ub97c "\uc608\uc815"\uc73c\ub85c \ucd08\uae30\ud654\ud558\uc9c0 \uc54a\uace0 \uadf8\ub300\ub85c \uac00\uc838\uc624\uae30
-  var copied = JSON.parse(JSON.stringify(planHeading.subheadings));
   if (state.headings[targetIdx].subheadings.length > 0) {
     if (!confirm('"\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d"\uc5d0 \uc774\ubbf8 \ub0b4\uc6a9\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\uae30\uc874 \ub0b4\uc6a9\uc744 \ub300\uccb4\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n(\ucde8\uc18c \uc2dc \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00\ub429\ub2c8\ub2e4)')) {
-      // \ucde8\uc18c = \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00
       state.headings[targetIdx].subheadings = state.headings[targetIdx].subheadings.concat(copied);
     } else {
-      // \ud655\uc778 = \ub300\uccb4
       state.headings[targetIdx].subheadings = copied;
     }
   } else {
