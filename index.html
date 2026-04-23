@@ -563,6 +563,25 @@ var currentListener = null;
 var lastSavedJSON = '';
 var isSaving = false;
 
+// Firebase\ub294 \ubc30\uc5f4\uc744 \uac1d\uccb4\ub85c \uc800\uc7a5\ud568 - \ubcf5\uc6d0 \ud5ec\ud37c
+function fixFirebaseArrays(data) {
+  if (!data || !data.headings) return data;
+  data.headings = Object.values(data.headings);
+  data.headings.forEach(function(h) {
+    if (h.subheadings && !Array.isArray(h.subheadings)) h.subheadings = Object.values(h.subheadings);
+    if (!h.subheadings) h.subheadings = [];
+    h.subheadings.forEach(function(sub) {
+      if (sub.tasks && !Array.isArray(sub.tasks)) sub.tasks = Object.values(sub.tasks);
+      if (!sub.tasks) sub.tasks = [];
+      sub.tasks.forEach(function(t) {
+        if (t.subtasks && !Array.isArray(t.subtasks)) t.subtasks = Object.values(t.subtasks);
+        if (!t.subtasks) t.subtasks = [];
+      });
+    });
+  });
+  return data;
+}
+
 /* ── STATE ── */
 var state = createInitialState();
 
@@ -1092,7 +1111,7 @@ function loadPrevWeekFromFirebase() {
     // \ud604\uc7ac \uc8fc\ucc28 \uc81c\uc678\ud558\uace0 \ub098\uba38\uc9c0 \ubaa9\ub85d \ub9cc\ub4e4\uae30
     var currentKey = state.year + '_' + state.month + '_' + state.week;
     var keys = Object.keys(all).filter(function(k) {
-      return k !== currentKey && all[k] && Array.isArray(all[k].headings);
+      return k !== currentKey && all[k] && all[k].headings;
     }).sort().reverse();
     if (keys.length === 0) {
       showToast('\u274c \ubd88\ub7ec\uc62c \uc218 \uc788\ub294 \ub2e4\ub978 \uc8fc\ucc28 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
@@ -1120,7 +1139,7 @@ function loadPrevWeekFromFirebase() {
       btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
       btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
       btn.onclick = function() {
-        loadPrevWeekPlan(all[key]);
+        loadPrevWeekPlan(fixFirebaseArrays(all[key]));
         document.body.removeChild(overlay);
       };
       list.appendChild(btn);
@@ -1583,8 +1602,8 @@ initDirHandle();
   var path = getDbPath();
   if (path) {
     db.ref(path).once('value').then(function(snapshot) {
-      var data = snapshot.val();
-      if (data && Array.isArray(data.headings)) {
+      var data = fixFirebaseArrays(snapshot.val());
+      if (data && data.headings) {
         state = data;
         renderAll();
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
