@@ -1077,33 +1077,54 @@ function getPrevWeekPath() {
 }
 
 function loadPrevWeekFromFirebase() {
-  var path = getPrevWeekPath();
-  if (!path) {
+  if (!state.year || !state.month || !state.week) {
     showToast('\u274c \uc5f0\ub3c4/\uc6d4/\uc8fc\ucc28\ub97c \uba3c\uc800 \uc785\ub825\ud558\uc138\uc694.', 'error');
     return;
   }
   flashSavedBadge('\uc9c0\ub09c\uc8fc \ub370\uc774\ud130 \ub85c\ub529...');
-  db.ref(path).once('value').then(function(snapshot) {
-    var prev = snapshot.val();
-    if (!prev || !Array.isArray(prev.headings)) {
-      // 5\uc8fc\ucc28 \ub370\uc774\ud130 \uc5c6\uc73c\uba74 4\uc8fc\ucc28\ub85c \uc7ac\uc2dc\ub3c4
-      var w = parseInt(path.split('_')[2]);
-      if (w === 5) {
-        var parts = path.split('_');
-        var fallback = parts[0] + '_' + parts[1] + '_4';
-        return db.ref(fallback).once('value').then(function(snap2) {
-          var prev2 = snap2.val();
-          if (!prev2 || !Array.isArray(prev2.headings)) {
-            showToast('\u274c \uc9c0\ub09c\uc8fc \ub370\uc774\ud130\uac00 Firebase\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
-            return;
-          }
-          loadPrevWeekPlan(prev2);
-        });
-      }
-      showToast('\u274c \uc9c0\ub09c\uc8fc \ub370\uc774\ud130\uac00 Firebase\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+  // Firebase\uc5d0\uc11c \uc804\uccb4 reports \ubaa9\ub85d\uc744 \uac00\uc838\uc640\uc11c \ubaa8\ub2ec\ub85c \ubcf4\uc5ec\uc90c
+  db.ref('reports').once('value').then(function(snapshot) {
+    var all = snapshot.val();
+    if (!all) {
+      showToast('\u274c Firebase\uc5d0 \uc800\uc7a5\ub41c \ubcf4\uace0\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
       return;
     }
-    loadPrevWeekPlan(prev);
+    // \ud604\uc7ac \uc8fc\ucc28 \uc81c\uc678\ud558\uace0 \ub098\uba38\uc9c0 \ubaa9\ub85d \ub9cc\ub4e4\uae30
+    var currentKey = state.year + '_' + state.month + '_' + state.week;
+    var keys = Object.keys(all).filter(function(k) {
+      return k !== currentKey && all[k] && Array.isArray(all[k].headings);
+    }).sort().reverse();
+    if (keys.length === 0) {
+      showToast('\u274c \ubd88\ub7ec\uc62c \uc218 \uc788\ub294 \ub2e4\ub978 \uc8fc\ucc28 \ub370\uc774\ud130\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+      return;
+    }
+    // \ubaa8\ub2ec \ud45c\uc2dc
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9998;display:flex;justify-content:center;align-items:center;';
+    var panel = document.createElement('div');
+    panel.style.cssText = 'background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.2);padding:24px 28px;min-width:380px;max-width:500px;max-height:70vh;display:flex;flex-direction:column;';
+    panel.innerHTML = '<h3 style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">\ud83d\udcc2 \ubd88\ub7ec\uc62c \uc8fc\ucc28 \uc120\ud0dd</h3>'
+      + '<div id="fb-week-list" style="flex:1;overflow-y:auto;margin-bottom:14px;"></div>'
+      + '<div style="text-align:right;"><button id="fb-cancel" style="padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#475569;color:#fff;font-family:inherit;">\ub2eb\uae30</button></div>';
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+    panel.querySelector('#fb-cancel').onclick = function() { document.body.removeChild(overlay); };
+    var list = panel.querySelector('#fb-week-list');
+    keys.forEach(function(key) {
+      var parts = key.split('_');
+      var label = parts[0] + '\ub144 ' + parts[1] + '\uc6d4 ' + parts[2] + '\uc8fc\ucc28';
+      var btn = document.createElement('button');
+      btn.textContent = label;
+      btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
+      btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
+      btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
+      btn.onclick = function() {
+        loadPrevWeekPlan(all[key]);
+        document.body.removeChild(overlay);
+      };
+      list.appendChild(btn);
+    });
   }).catch(function(err) {
     showToast('\u274c Firebase \ub85c\ub4dc \uc2e4\ud328: ' + err.message, 'error');
   });
