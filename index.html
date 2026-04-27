@@ -83,6 +83,11 @@
     .btn:active { transform: scale(0.97); }
     .btn-primary   { background: #3b82f6; color: #fff; }
     .btn-primary:hover { background: #2563eb; }
+    .btn-summary   { background: #f59e0b; color: #fff; }
+    .btn-summary:hover { background: #d97706; }
+    .btn-undo      { background: #64748b; color: #fff; min-width: 36px; padding: 7px 10px; }
+    .btn-undo:hover { background: #475569; }
+    .btn-undo:disabled { background: #cbd5e1; color: #94a3b8; cursor: default; transform: none; }
     .btn-export    { background: #059669; color: #fff; }
     .btn-export:hover { background: #047857; }
     .btn-import    { background: #8b5cf6; color: #fff; }
@@ -499,11 +504,13 @@
   <span class="report-date" id="report-date">보고 날짜: &#8212;</span>
   <div class="spacer"></div>
   <span class="saved-badge" id="saved-badge">자동 저장</span>
+  <button class="btn btn-undo" id="btn-undo" onclick="undo()" disabled title="Undo (Ctrl+Z)">&#8617;</button>
+  <button class="btn btn-undo" id="btn-redo" onclick="redo()" disabled title="Redo (Ctrl+Y)">&#8618;</button>
+  <button class="btn btn-summary" onclick="showSummary()">&#128220; 요약</button>
   <button class="btn btn-primary" onclick="copyToClipboard()">&#128203; 클립보드 복사</button>
   <button class="btn btn-export" onclick="exportJSON()">&#8595; Export</button>
   <button class="btn btn-import" onclick="importFromFolder()">&#8593; Import</button>
   <input type="file" id="file-import" accept=".json" onchange="importJSON(event)" />
-  <button class="btn btn-reset" onclick="resetAll()">초기화</button>
   <button class="btn btn-settings" onclick="openSettings()">&#9881; Settings</button>
 </header>
 <input type="file" id="file-prev-import" accept=".json" onchange="handlePrevWeekFile(event)" />
@@ -582,6 +589,66 @@ function fixFirebaseArrays(data) {
   return data;
 }
 
+/* ── UNDO / REDO ── */
+var undoStack = [];
+var redoStack = [];
+var HISTORY_LIMIT = 50;
+var historyTimer = null;
+var isUndoRedo = false;
+
+function pushHistory() {
+  if (isUndoRedo) return;
+  undoStack.push(JSON.stringify(state));
+  if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+  redoStack = [];
+  updateUndoButtons();
+}
+
+function scheduleHistory() {
+  if (isUndoRedo) return;
+  if (historyTimer) clearTimeout(historyTimer);
+  historyTimer = setTimeout(pushHistory, 600);
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  redoStack.push(JSON.stringify(state));
+  state = JSON.parse(undoStack.pop());
+  isUndoRedo = true;
+  renderAll();
+  commitSave();
+  isUndoRedo = false;
+  updateUndoButtons();
+}
+
+function redo() {
+  if (redoStack.length === 0) return;
+  undoStack.push(JSON.stringify(state));
+  state = JSON.parse(redoStack.pop());
+  isUndoRedo = true;
+  renderAll();
+  commitSave();
+  isUndoRedo = false;
+  updateUndoButtons();
+}
+
+function updateUndoButtons() {
+  var ub = document.getElementById('btn-undo');
+  var rb = document.getElementById('btn-redo');
+  if (ub) ub.disabled = undoStack.length === 0;
+  if (rb) rb.disabled = redoStack.length === 0;
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+    e.preventDefault();
+    undo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z') || (e.shiftKey && e.key === 'Z'))) {
+    e.preventDefault();
+    redo();
+  }
+});
+
 /* ── STATE ── */
 var state = createInitialState();
 
@@ -590,7 +657,7 @@ function createInitialState() {
   return {
     year: now.getFullYear(),
     month: now.getMonth() + 1,
-    week: '',
+    week: calcWeekOfMonth(now),
     headings: JSON.parse(JSON.stringify(DEFAULT_HEADINGS))
   };
 }
@@ -606,6 +673,7 @@ function getDbPath() {
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(commitSave, 400);
+  scheduleHistory();
 }
 
 function commitSave() {
@@ -639,8 +707,8 @@ function subscribeToReport() {
   currentRef = db.ref(path);
   // 먼저 한 번 기존 데이터를 불러오고 리스너 연결
   currentRef.once('value').then(function(snapshot) {
-    var data = snapshot.val();
-    if (data && Array.isArray(data.headings)) {
+    var data = fixFirebaseArrays(snapshot.val());
+    if (data && data.headings) {
       state = data;
       lastSavedJSON = JSON.stringify(data);
       renderAll();
@@ -649,8 +717,8 @@ function subscribeToReport() {
     }
     // 리스너 연결 (이후 실시간 변경 감지)
     currentListener = currentRef.on('value', function(snapshot) {
-      var data = snapshot.val();
-      if (!data || !Array.isArray(data.headings)) return;
+      var data = fixFirebaseArrays(snapshot.val());
+      if (!data || !data.headings) return;
       var incomingJSON = JSON.stringify(data);
       if (incomingJSON === lastSavedJSON) return;
       if (incomingJSON === JSON.stringify(state)) return;
@@ -694,14 +762,38 @@ function resetAll() {
 }
 
 /* ── DATE CALCULATION ── */
+function calcWeekOfMonth(date) {
+  var year = date.getFullYear();
+  var month = date.getMonth();
+  var day = date.getDate();
+  var firstDow = new Date(year, month, 1).getDay();
+  // Mon=0, Tue=1, ..., Sun=6
+  var adjustedDow = (firstDow + 6) % 7;
+  if (adjustedDow === 0) {
+    // 월 1일이 월요일인 경우
+    return Math.ceil(day / 7);
+  }
+  var daysInFirstWeek = 7 - adjustedDow;
+  if (day <= daysInFirstWeek) return 1;
+  return Math.ceil((day - daysInFirstWeek) / 7) + 1;
+}
+
 function calcReportMonday(year, month, week) {
   if (!year || !month || !week) return null;
-  // 해당 월의 첫 번째 월요일 찾기
   var firstDay = new Date(year, month - 1, 1);
-  var dow = firstDay.getDay(); // 0=Sun ... 6=Sat
-  var firstMonday = dow === 0 ? 2 : dow === 1 ? 1 : 9 - dow;
-  // N주차 월요일 = 첫 월요일 + (N-1)*7
-  var day = firstMonday + (week - 1) * 7;
+  var dow = firstDay.getDay();
+  var adjustedDow = (dow + 6) % 7; // Mon=0
+  if (adjustedDow === 0) {
+    // 월 1일이 월요일
+    var day = 1 + (week - 1) * 7;
+  } else {
+    var daysInFirstWeek = 7 - adjustedDow;
+    if (week === 1) {
+      var day = 1;
+    } else {
+      var day = daysInFirstWeek + 1 + (week - 2) * 7;
+    }
+  }
   return new Date(year, month - 1, day);
 }
 
@@ -781,9 +873,6 @@ function renderSubheading(hi, sub, si) {
 }
 
 function renderTask(hi, si, task, ti) {
-  var opts = STATUS_OPTIONS.map(function(s) {
-    return '<option value="' + s + '"' + (s === task.status ? ' selected' : '') + '>' + s + '</option>';
-  }).join('');
   var subtasks = task.subtasks || [];
   var subtaskHtml = subtasks.map(function(st, sti) {
     return renderSubtask(hi, si, ti, st, sti);
@@ -797,9 +886,6 @@ function renderTask(hi, si, task, ti) {
     + ' onkeydown="taskKeyDown(event,' + hi + ',' + si + ',' + ti + ')">'
     + escHtml(task.text)
     + '</textarea>'
-    + '<select class="status-select" data-status="' + escAttr(task.status) + '"'
-    + ' onchange="updateTaskStatus(' + hi + ',' + si + ',' + ti + ',this.value);this.dataset.status=this.value">'
-    + opts + '</select>'
     + '<button class="btn-delete-task" onclick="deleteTask(' + hi + ',' + si + ',' + ti + ')" title="\uc0ad\uc81c">\xd7</button>'
     + '</div>'
     + '<div class="subtask-list" id="subtasks-' + hi + '-' + si + '-' + ti + '">'
@@ -810,19 +896,26 @@ function renderTask(hi, si, task, ti) {
 }
 
 function renderSubtask(hi, si, ti, st, sti) {
-  return '<div class="subtask-row" id="subtask-' + hi + '-' + si + '-' + ti + '-' + sti + '">'
+  var opts = STATUS_OPTIONS.map(function(s) {
+    return '<option value="' + s + '"' + (s === (st.status || '\uc608\uc815') ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+  return '<div class="subtask-row" id="subtask-' + hi + '-' + si + '-' + ti + '-' + sti + '">' 
     + '<span class="subtask-indicator">\u2514</span>'
     + '<textarea class="task-input" rows="1"'
     + ' placeholder="\uc138\ubd80 Task"'
     + ' oninput="updateSubtaskText(' + hi + ',' + si + ',' + ti + ',' + sti + ',this.value);autoResize(this)">'
     + escHtml(st.text)
     + '</textarea>'
+    + '<select class="status-select" data-status="' + escAttr(st.status || '\uc608\uc815') + '"'
+    + ' onchange="updateSubtaskStatus(' + hi + ',' + si + ',' + ti + ',' + sti + ',this.value);this.dataset.status=this.value">'
+    + opts + '</select>'
     + '<button class="btn-delete-task" onclick="deleteSubtask(' + hi + ',' + si + ',' + ti + ',' + sti + ')" title="\uc0ad\uc81c">\xd7</button>'
     + '</div>';
 }
 
 /* ── HEADING OPERATIONS ── */
 function addHeading() {
+  pushHistory();
   state.headings.push({ title: '', subheadings: [] });
   renderContent();
   scheduleSave();
@@ -832,6 +925,7 @@ function addHeading() {
 
 function deleteHeading(hi) {
   if (!confirm('"' + (state.headings[hi].title || '(\ube44\uc5b4\uc788\uc74c)') + '"\uc744(\ub97c) \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) return;
+  pushHistory();
   state.headings.splice(hi, 1);
   renderContent();
   scheduleSave();
@@ -856,6 +950,7 @@ function headingDrop(targetHi, event) {
   var from = dragState.index;
   dragState = null;
   if (from === targetHi) return;
+  pushHistory();
   var item = state.headings.splice(from, 1)[0];
   state.headings.splice(targetHi, 0, item);
   renderContent();
@@ -874,6 +969,7 @@ function subDrop(targetHi, targetSi, event) {
   var from = dragState.index;
   dragState = null;
   if (from === targetSi) return;
+  pushHistory();
   var subs = state.headings[targetHi].subheadings;
   var item = subs.splice(from, 1)[0];
   subs.splice(targetSi, 0, item);
@@ -883,6 +979,7 @@ function subDrop(targetHi, targetSi, event) {
 
 /* ── SUBHEADING OPERATIONS ── */
 function addSubheading(hi) {
+  pushHistory();
   state.headings[hi].subheadings.push({ title: '', assignee: '', tasks: [] });
   renderContent();
   scheduleSave();
@@ -894,6 +991,7 @@ function addSubheading(hi) {
 function deleteSub(hi, si) {
   var sub = state.headings[hi].subheadings[si];
   if (!confirm('"' + (sub.title || '(\ube44\uc5b4\uc788\uc74c)') + '"\uc744(\ub97c) \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) return;
+  pushHistory();
   state.headings[hi].subheadings.splice(si, 1);
   renderContent();
   scheduleSave();
@@ -911,6 +1009,7 @@ function updateSubAssignee(hi, si, value) {
 
 /* ── TASK OPERATIONS ── */
 function addTask(hi, si, initText) {
+  pushHistory();
   state.headings[hi].subheadings[si].tasks.push({ text: initText || '', status: '\uc608\uc815', subtasks: [] });
   var tasks = state.headings[hi].subheadings[si].tasks;
   var container = document.getElementById('tasks-' + hi + '-' + si);
@@ -956,6 +1055,7 @@ function updateTaskStatus(hi, si, ti, value) {
 }
 
 function deleteTask(hi, si, ti) {
+  pushHistory();
   state.headings[hi].subheadings[si].tasks.splice(ti, 1);
   var container = document.getElementById('tasks-' + hi + '-' + si);
   container.innerHTML = state.headings[hi].subheadings[si].tasks
@@ -966,9 +1066,10 @@ function deleteTask(hi, si, ti) {
 
 /* ── SUBTASK OPERATIONS ── */
 function addSubtask(hi, si, ti) {
+  pushHistory();
   var task = state.headings[hi].subheadings[si].tasks[ti];
   if (!task.subtasks) task.subtasks = [];
-  task.subtasks.push({ text: '' });
+  task.subtasks.push({ text: '', status: '\uc608\uc815' });
   var sti = task.subtasks.length - 1;
   var container = document.getElementById('subtasks-' + hi + '-' + si + '-' + ti);
   var wrapper = document.createElement('div');
@@ -984,7 +1085,14 @@ function updateSubtaskText(hi, si, ti, sti, value) {
   scheduleSave();
 }
 
+function updateSubtaskStatus(hi, si, ti, sti, value) {
+  pushHistory();
+  state.headings[hi].subheadings[si].tasks[ti].subtasks[sti].status = value;
+  scheduleSave();
+}
+
 function deleteSubtask(hi, si, ti, sti) {
+  pushHistory();
   state.headings[hi].subheadings[si].tasks[ti].subtasks.splice(sti, 1);
   var container = document.getElementById('subtasks-' + hi + '-' + si + '-' + ti);
   var task = state.headings[hi].subheadings[si].tasks[ti];
@@ -1415,7 +1523,9 @@ function buildExportHTML() {
         if (t.subtasks && t.subtasks.length > 0) {
           html += '<ul style="margin:2px 0 2px 0;padding-left:18px;font-size:12px;color:#475569;">';
           t.subtasks.forEach(function(st) {
-            html += '<li style="margin-bottom:1px;">' + escHtml(st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '</li>';
+            var sc = STATUS_COLOR[st.status] || STATUS_COLOR['\uc608\uc815'];
+            var stBadge = ' <span style="font-size:10px;color:' + sc.text + ';font-weight:700;">- ' + escHtml(st.status || '\uc608\uc815') + '</span>';
+            html += '<li style="margin-bottom:1px;">' + escHtml(st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + stBadge + '</li>';
           });
           html += '</ul>';
         }
@@ -1448,7 +1558,7 @@ function buildExportPlainText() {
         text += '  ' + taskNum + '. ' + (t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + ' - ' + t.status + '\n';
         if (t.subtasks && t.subtasks.length > 0) {
           t.subtasks.forEach(function(st) {
-            text += '    - ' + (st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '\n';
+            text += '    - ' + (st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + ' - ' + (st.status || '\uc608\uc815') + '\n';
           });
         }
       });
@@ -1477,6 +1587,63 @@ async function copyToClipboard() {
     console.error('clipboard error:', e);
     showToast('\u274c \ubcf5\uc0ac \uc2e4\ud328. \ube0c\ub77c\uc6b0\uc800 \uad8c\ud55c\uc744 \ud655\uc778\ud558\uc138\uc694.', 'error');
   }
+}
+
+/* ── SUMMARY POPUP ── */
+function showSummary() {
+  var weekLabel = getWeekLabel();
+  var dateLabel = getReportDateStr();
+  var titleStr = dateLabel ? weekLabel + ' (' + dateLabel + ')' : weekLabel;
+
+  var html = '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',\'Malgun Gothic\',sans-serif;color:#1e293b;line-height:1.8;padding:4px 0;">';
+  html += '<h2 style="font-size:17px;font-weight:800;color:#1e3a5f;margin-bottom:14px;border-bottom:2px solid #1e3a5f;padding-bottom:8px;">' + escHtml(titleStr) + '</h2>';
+
+  state.headings.forEach(function(h) {
+    var hasSubs = h.subheadings && h.subheadings.some(function(sub) { return sub.tasks && sub.tasks.length > 0; });
+    if (!hasSubs) return;
+    html += '<h3 style="font-size:14px;font-weight:700;color:#1e3a5f;margin:16px 0 6px;">' + escHtml(h.title) + '</h3>';
+    h.subheadings.forEach(function(sub) {
+      if (!sub.tasks || sub.tasks.length === 0) return;
+      var assigneeStr = sub.assignee ? ' <span style="color:#6b7280;">(' + escHtml(sub.assignee) + ')</span>' : '';
+      html += '<h4 style="font-size:13px;font-weight:700;color:#475569;margin:8px 0 4px;">' + escHtml(sub.title) + assigneeStr + '</h4>';
+      html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;">';
+      html += '<tr style="background:#f1f5f9;"><th style="text-align:left;padding:4px 8px;border:1px solid #e2e8f0;width:30px;">#</th><th style="text-align:left;padding:4px 8px;border:1px solid #e2e8f0;">\ub0b4\uc6a9</th><th style="text-align:center;padding:4px 8px;border:1px solid #e2e8f0;width:60px;">\uc0c1\ud0dc</th></tr>';
+      sub.tasks.forEach(function(t, ti) {
+        html += '<tr><td style="padding:4px 8px;border:1px solid #e2e8f0;text-align:center;color:#94a3b8;">' + (ti+1) + '</td>';
+        html += '<td style="padding:4px 8px;border:1px solid #e2e8f0;">' + escHtml(t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '</td>';
+        html += '<td style="padding:4px 8px;border:1px solid #e2e8f0;text-align:center;">-</td></tr>';
+        if (t.subtasks && t.subtasks.length > 0) {
+          t.subtasks.forEach(function(st) {
+            var sc = STATUS_COLOR[st.status] || STATUS_COLOR['\uc608\uc815'];
+            html += '<tr><td style="padding:3px 8px;border:1px solid #e2e8f0;"></td>';
+            html += '<td style="padding:3px 8px;border:1px solid #e2e8f0;color:#64748b;font-size:11px;">\u2514 ' + escHtml(st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '</td>';
+            html += '<td style="padding:3px 8px;border:1px solid #e2e8f0;text-align:center;font-size:11px;font-weight:600;color:' + sc.text + ';background:' + sc.bg + ';">' + escHtml(st.status || '\uc608\uc815') + '</td></tr>';
+          });
+        }
+      });
+      html += '</table>';
+    });
+  });
+  html += '</div>';
+
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;display:flex;justify-content:center;align-items:center;';
+  var panel = document.createElement('div');
+  panel.style.cssText = 'background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.25);padding:28px 32px;min-width:500px;max-width:780px;max-height:85vh;display:flex;flex-direction:column;';
+  panel.innerHTML = '<div style="flex:1;overflow-y:auto;">' + html + '</div>'
+    + '<div style="text-align:right;margin-top:16px;display:flex;gap:8px;justify-content:flex-end;">'
+    + '<button id="summary-copy" style="padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#3b82f6;color:#fff;font-family:inherit;">\ud074\ub9bd\ubcf4\ub4dc \ubcf5\uc0ac</button>'
+    + '<button id="summary-close" style="padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#475569;color:#fff;font-family:inherit;">\ub2eb\uae30</button>'
+    + '</div>';
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
+  panel.querySelector('#summary-close').onclick = function() { document.body.removeChild(overlay); };
+  panel.querySelector('#summary-copy').onclick = function() {
+    copyToClipboard().then(function() {
+      document.body.removeChild(overlay);
+    });
+  };
 }
 
 /* ── TOAST ── */
