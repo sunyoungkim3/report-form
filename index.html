@@ -1447,6 +1447,38 @@ function loadPrevWeekPlan(prev) {
   } else {
     state.headings[targetIdx].subheadings = copied;
   }
+  // \uc9c0\ub09c\uc8fc "0." \ub300\uc81c\ubaa9 \ub0b4\uc6a9\ub3c4 \ud568\uaed8 \ubd88\ub7ec\uc624\uae30
+  var prevZeroHeading = null;
+  for (var z = 0; z < prev.headings.length; z++) {
+    var zt = prev.headings[z].title || '';
+    if (/^0[\.\s]/.test(zt)) {
+      prevZeroHeading = prev.headings[z];
+      break;
+    }
+  }
+  if (prevZeroHeading) {
+    var curZeroIdx = -1;
+    for (var z2 = 0; z2 < state.headings.length; z2++) {
+      var zt2 = state.headings[z2].title || '';
+      if (/^0[\.\s]/.test(zt2)) {
+        curZeroIdx = z2;
+        break;
+      }
+    }
+    if (curZeroIdx !== -1) {
+      var copiedZero = JSON.parse(JSON.stringify(prevZeroHeading.subheadings || []));
+      if (state.headings[curZeroIdx].subheadings.length > 0) {
+        if (!confirm('"' + state.headings[curZeroIdx].title + '"\uc5d0 \uc774\ubbf8 \ub0b4\uc6a9\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\uae30\uc874 \ub0b4\uc6a9\uc744 \ub300\uccb4\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n(\ucde8\uc18c \uc2dc \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00\ub429\ub2c8\ub2e4)')) {
+          state.headings[curZeroIdx].subheadings = state.headings[curZeroIdx].subheadings.concat(copiedZero);
+        } else {
+          state.headings[curZeroIdx].subheadings = copiedZero;
+        }
+      } else {
+        state.headings[curZeroIdx].subheadings = copiedZero;
+      }
+    }
+  }
+
   renderContent();
   commitSave();
   showToast('\u2705 \uc9c0\ub09c\uc8fc "\uc774\ubc88 \uc8fc \uacc4\ud68d" \u2192 "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ubd88\ub7ec\uc634', 'success');
