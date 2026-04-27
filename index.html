@@ -488,6 +488,19 @@
       margin-top: 4px;
       line-height: 1.5;
     }
+    .collab-badge {
+      display: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fbbf24;
+      background: #451a03;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+      animation: collabPulse 1.5s ease-in-out infinite;
+    }
+    .collab-badge.show { display: inline-block; }
+    @keyframes collabPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
   </style>
 </head>
 <body>
@@ -502,6 +515,7 @@
   <input type="number" id="inp-week" class="header-input" min="1" max="6" placeholder="3" />
   <span class="header-label">주차</span>
   <span class="report-date" id="report-date">보고 날짜: &#8212;</span>
+  <span class="collab-badge" id="collab-badge">👥 동시작성중</span>
   <div class="spacer"></div>
   <span class="saved-badge" id="saved-badge">자동 저장</span>
   <button class="btn btn-undo" id="btn-undo" onclick="undo()" disabled title="Undo (Ctrl+Z)">&#8617;</button>
@@ -570,9 +584,58 @@ var currentListener = null;
 var lastSavedJSON = '';
 var isSaving = false;
 
+/* ── PRESENCE ── */
+var myPresenceId = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+var presenceRef = null;
+var presenceListener = null;
+
+function setupPresence() {
+  cleanupPresence();
+  var path = getDbPath();
+  if (!path) { updateCollabBadge(0); return; }
+  var presencePath = path + '/_presence/' + myPresenceId;
+  presenceRef = db.ref(presencePath);
+  presenceRef.set(true);
+  presenceRef.onDisconnect().remove();
+  var listRef = db.ref(path + '/_presence');
+  presenceListener = listRef.on('value', function(snap) {
+    var val = snap.val();
+    var count = val ? Object.keys(val).length : 0;
+    updateCollabBadge(count);
+  });
+}
+
+function cleanupPresence() {
+  if (presenceRef) {
+    presenceRef.remove();
+    presenceRef.onDisconnect().cancel();
+  }
+  if (presenceListener) {
+    var path = getDbPath();
+    if (path) db.ref(path + '/_presence').off('value', presenceListener);
+    presenceListener = null;
+  }
+  presenceRef = null;
+}
+
+function updateCollabBadge(count) {
+  var el = document.getElementById('collab-badge');
+  if (count > 1) {
+    el.textContent = '\ud83d\udc65 \ub3d9\uc2dc\uc791\uc131\uc911 (' + count + '\uba85)';
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+window.addEventListener('beforeunload', function() {
+  cleanupPresence();
+});
+
 // Firebase\ub294 \ubc30\uc5f4\uc744 \uac1d\uccb4\ub85c \uc800\uc7a5\ud568 - \ubcf5\uc6d0 \ud5ec\ud37c
 function fixFirebaseArrays(data) {
   if (!data || !data.headings) return data;
+  delete data._presence;
   data.headings = Object.values(data.headings);
   data.headings.forEach(function(h) {
     if (h.subheadings && !Array.isArray(h.subheadings)) h.subheadings = Object.values(h.subheadings);
@@ -702,6 +765,7 @@ function subscribeToReport() {
     currentListener = null;
     currentRef = null;
   }
+  setupPresence();
   var path = getDbPath();
   if (!path) return;
   currentRef = db.ref(path);
