@@ -607,7 +607,7 @@ var STATUS_COLOR = {
 };
 
 var DEFAULT_HEADINGS = [
-  { title: '0. \ud68c\uc758 \uc6b4\uc601', subheadings: [] },
+  { title: '0. \uc900\ube44/\uac80\ud1a0', subheadings: [] },
   { title: '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d', subheadings: [] },
   { title: '2. \uc774\ubc88 \uc8fc \uacc4\ud68d', subheadings: [] },
   { title: '3. \uae30\ud0c0', subheadings: [] }
@@ -964,15 +964,25 @@ function ensureFixedHeadings() {
   if (key === threshold && (state.week || 0) < 2) return;
 
   var required = [
+    '0. \uc900\ube44/\uac80\ud1a0',
     '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d',
     '2. \uc774\ubc88 \uc8fc \uacc4\ud68d',
     '3. \uae30\ud0c0'
   ];
+  // 없는 대제목 추가 후, 고정 대제목 순서 보장
   required.forEach(function(title) {
     var exists = state.headings.some(function(h) { return h.title.trim() === title; });
     if (!exists) {
       state.headings.push({ title: title, subheadings: [] });
     }
+  });
+  // 고정 대제목을 올바른 순서로 정렬
+  var fixedOrder = {};
+  required.forEach(function(t, i) { fixedOrder[t] = i; });
+  state.headings.sort(function(a, b) {
+    var ai = fixedOrder.hasOwnProperty(a.title.trim()) ? fixedOrder[a.title.trim()] : 99;
+    var bi = fixedOrder.hasOwnProperty(b.title.trim()) ? fixedOrder[b.title.trim()] : 99;
+    return ai - bi;
   });
 }
 
@@ -984,7 +994,8 @@ function isFixedHeading(title) {
   if (key < threshold) return false;
   if (key === threshold && (state.week || 0) < 2) return false;
   var t = title.trim();
-  return t === '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d' ||
+  return t === '0. \uc900\ube44/\uac80\ud1a0' ||
+         t === '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d' ||
          t === '2. \uc774\ubc88 \uc8fc \uacc4\ud68d' ||
          t === '3. \uae30\ud0c0';
 }
@@ -1611,7 +1622,7 @@ function loadPrevWeekPlan(prev) {
   } else {
     state.headings[targetIdx].subheadings = copied;
   }
-  // \uc9c0\ub09c\uc8fc "0." \ub300\uc81c\ubaa9 \ub0b4\uc6a9\ub3c4 \ud568\uaed8 \ubd88\ub7ec\uc624\uae30
+  // 지난주 "0." 대제목 소제목 구조만 불러오기 (task는 비움)
   var prevZeroHeading = null;
   for (var z = 0; z < prev.headings.length; z++) {
     var zt = prev.headings[z].title || '';
@@ -1631,15 +1642,8 @@ function loadPrevWeekPlan(prev) {
     }
     if (curZeroIdx !== -1) {
       var copiedZero = JSON.parse(JSON.stringify(prevZeroHeading.subheadings || []));
-      if (state.headings[curZeroIdx].subheadings.length > 0) {
-        if (!confirm('"' + state.headings[curZeroIdx].title + '"\uc5d0 \uc774\ubbf8 \ub0b4\uc6a9\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n\uae30\uc874 \ub0b4\uc6a9\uc744 \ub300\uccb4\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?\n(\ucde8\uc18c \uc2dc \uae30\uc874 \ub0b4\uc6a9 \ub4a4\uc5d0 \ucd94\uac00\ub429\ub2c8\ub2e4)')) {
-          state.headings[curZeroIdx].subheadings = state.headings[curZeroIdx].subheadings.concat(copiedZero);
-        } else {
-          state.headings[curZeroIdx].subheadings = copiedZero;
-        }
-      } else {
-        state.headings[curZeroIdx].subheadings = copiedZero;
-      }
+      copiedZero.forEach(function(sub) { sub.tasks = []; });
+      state.headings[curZeroIdx].subheadings = copiedZero;
     }
   }
 
