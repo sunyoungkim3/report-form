@@ -11,48 +11,48 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #f0f4f8;
+      color: #1a2b3c;
       min-height: 100vh;
       padding-bottom: 60px;
     }
 
     /* ── Header ── */
     .app-header {
-      background: #1e3a5f;
+      background: #003B71;
       color: #fff;
       padding: 14px 24px;
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      box-shadow: 0 2px 12px rgba(0,59,113,0.25);
       position: sticky;
       top: 0;
       z-index: 100;
     }
     .app-header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
-    .header-sep { height: 22px; width: 1px; background: #3d5a80; margin: 0 2px; }
+    .header-sep { height: 22px; width: 1px; background: #1a5a9e; margin: 0 2px; }
     .header-label { font-size: 12px; color: #94a3b8; white-space: nowrap; }
     .header-input {
-      background: #2d4f7c;
-      border: 1px solid #4a6fa5;
+      background: #024a8a;
+      border: 1px solid #1a6bb5;
       color: #fff;
       border-radius: 6px;
       padding: 5px 10px;
       font-size: 13px;
       font-family: inherit;
     }
-    .header-input:focus { outline: 2px solid #60a5fa; outline-offset: 1px; }
-    .header-input::placeholder { color: #7b9cc0; }
+    .header-input:focus { outline: 2px solid #00B4D8; outline-offset: 1px; }
+    .header-input::placeholder { color: #6b9fd4; }
     #inp-month { width: 56px; }
     #inp-week  { width: 56px; }
     #inp-year  { width: 68px; }
     .report-date {
       font-size: 12px;
-      color: #93c5fd;
-      background: #1a3352;
+      color: #7dd3fc;
+      background: #002a52;
       padding: 4px 10px;
       border-radius: 4px;
       white-space: nowrap;
@@ -60,14 +60,14 @@
     .spacer { flex: 1; }
     .saved-badge {
       font-size: 11px;
-      color: #64748b;
-      background: #1a3352;
+      color: #7dd3fc;
+      background: #002a52;
       padding: 3px 8px;
       border-radius: 4px;
       white-space: nowrap;
       transition: color 0.3s;
     }
-    .saved-badge.flash { color: #86efac; }
+    .saved-badge.flash { color: #6ee7b7; }
 
     .btn {
       padding: 7px 14px;
@@ -81,28 +81,69 @@
       font-family: inherit;
     }
     .btn:active { transform: scale(0.97); }
-    .btn-primary   { background: #3b82f6; color: #fff; }
-    .btn-primary:hover { background: #2563eb; }
+    .btn-primary   { background: #00B4D8; color: #fff; }
+    .btn-primary:hover { background: #0097b2; }
     .btn-summary   { background: #f59e0b; color: #fff; }
     .btn-summary:hover { background: #d97706; }
-    .btn-undo      { background: #64748b; color: #fff; min-width: 36px; padding: 7px 10px; }
-    .btn-undo:hover { background: #475569; }
-    .btn-undo:disabled { background: #cbd5e1; color: #94a3b8; cursor: default; transform: none; }
+    .btn-undo      { background: #4a6d8c; color: #fff; min-width: 36px; padding: 7px 10px; }
+    .btn-undo:hover { background: #3a5a75; }
+    .btn-undo:disabled { background: #c1d0de; color: #8fa6b8; cursor: default; transform: none; }
     .btn-export    { background: #059669; color: #fff; }
     .btn-export:hover { background: #047857; }
-    .btn-import    { background: #8b5cf6; color: #fff; }
-    .btn-import:hover { background: #7c3aed; }
+    .btn-import    { background: #6366f1; color: #fff; }
+    .btn-import:hover { background: #4f46e5; }
     .btn-reset     { background: #374151; color: #d1d5db; }
     .btn-reset:hover { background: #4b5563; }
 
     /* ── Content ── */
     .content { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
 
+    .content-date-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 22px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,59,113,0.08);
+      position: sticky;
+      top: 56px;
+      z-index: 50;
+      border-left: 4px solid #00B4D8;
+    }
+    .content-date-bar .header-input {
+      background: #f0f7fc;
+      border: 1px solid #d1e5f4;
+      color: #003B71;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+    }
+    .content-date-bar .header-input:focus { outline: 2px solid #00B4D8; outline-offset: 1px; }
+    .content-date-bar .header-input::placeholder { color: #8badc7; }
+    .content-date-bar .header-label { font-size: 14px; font-weight: 600; color: #003B71; white-space: nowrap; }
+    .content-date-bar .report-date {
+      font-size: 14px;
+      font-weight: 600;
+      color: #003B71;
+      background: #e6f7fb;
+      padding: 6px 14px;
+      border-radius: 6px;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+    .content-date-bar #inp-year { width: 74px; }
+    .content-date-bar #inp-month { width: 60px; }
+    .content-date-bar #inp-week { width: 60px; }
+
     /* ── Heading block (대제목) ── */
     .heading-block {
       background: #fff;
       border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      box-shadow: 0 2px 8px rgba(0,59,113,0.07);
       margin-bottom: 18px;
       overflow: hidden;
       animation: fadeIn 0.2s ease;
@@ -110,9 +151,9 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
     .heading-header {
-      background: #1e3a5f;
+      background: #003B71;
       color: #fff;
-      padding: 8px 16px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -129,8 +170,9 @@
       font-family: inherit;
       letter-spacing: -0.2px;
     }
-    .heading-input:focus { outline: none; border-bottom-color: #60a5fa; }
-    .heading-input::placeholder { color: #7b9cc0; }
+    .heading-input:focus { outline: none; border-bottom-color: #00B4D8; }
+    .heading-input::placeholder { color: #6b9fd4; }
+    .heading-input[readonly] { cursor: default; opacity: 0.95; }
 
     .btn-icon {
       background: none;
@@ -163,7 +205,7 @@
     .subheading-bar {
       width: 3px;
       height: 16px;
-      background: #3b82f6;
+      background: #00B4D8;
       border-radius: 2px;
       flex-shrink: 0;
     }
@@ -180,7 +222,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .subheading-input:focus { outline: none; border-bottom-color: #3b82f6; }
+    .subheading-input:focus { outline: none; border-bottom-color: #00B4D8; }
     .subheading-input::placeholder { color: #94a3b8; text-transform: none; }
     .subheading-header .btn-icon { font-size: 15px; }
     .subheading-header .btn-icon:hover { color: #ef4444; background: #fef2f2; }
@@ -209,7 +251,7 @@
       min-height: 30px;
       line-height: 1.5;
     }
-    .task-input:focus { outline: none; border-color: #3b82f6; background: #fff; }
+    .task-input:focus { outline: none; border-color: #00B4D8; background: #fff; }
     .task-input::placeholder { color: #94a3b8; }
 
     .status-select {
@@ -224,7 +266,7 @@
       font-family: inherit;
       transition: border-color 0.15s;
     }
-    .status-select:focus { outline: none; border-color: #3b82f6; }
+    .status-select:focus { outline: none; border-color: #00B4D8; }
     .status-select[data-status="완료"]   { color: #16a34a; background: #f0fdf4; border-color: #86efac; }
     .status-select[data-status="진행중"] { color: #1d4ed8; background: #eff6ff; border-color: #93c5fd; }
     .status-select[data-status="예정"]   { color: #64748b; background: #f8fafc; border-color: #cbd5e1; }
@@ -242,7 +284,7 @@
       font-family: inherit;
       transition: border-color 0.15s;
     }
-    .assignee-select:focus { outline: none; border-color: #3b82f6; }
+    .assignee-select:focus { outline: none; border-color: #00B4D8; }
 
     .btn-delete-task {
       background: none; border: none; cursor: pointer; color: #cbd5e1;
@@ -292,7 +334,21 @@
       font-family: inherit;
       transition: color 0.15s;
     }
-    .btn-add-subtask:hover { color: #3b82f6; }
+    .btn-add-subtask:hover { color: #00B4D8; }
+
+    .btn-send-to-plan {
+      background: none;
+      border: 1px solid #7dd3e8;
+      color: #0097b2;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      line-height: 1;
+    }
+    .btn-send-to-plan:hover { background: #e6f7fb; border-color: #00B4D8; }
 
     /* ── Add buttons ── */
     .quick-add-input {
@@ -307,7 +363,7 @@
       transition: all 0.15s;
       box-sizing: border-box;
     }
-    .quick-add-input:focus { outline: none; border-color: #3b82f6; border-style: solid; background: #fff; color: #1e293b; }
+    .quick-add-input:focus { outline: none; border-color: #00B4D8; border-style: solid; background: #fff; color: #1a2b3c; }
     .quick-add-input::placeholder { color: #94a3b8; }
 
     .btn-add {
@@ -324,7 +380,7 @@
       text-align: left;
       font-family: inherit;
     }
-    .btn-add:hover { border-color: #3b82f6; color: #2563eb; background: #eff6ff; }
+    .btn-add:hover { border-color: #00B4D8; color: #0097b2; background: #e6f7fb; }
 
     .btn-add-heading {
       background: none;
@@ -340,7 +396,7 @@
       font-family: inherit;
       transition: all 0.15s;
     }
-    .btn-add-heading:hover { border-color: #1e3a5f; color: #1e3a5f; background: #fff; }
+    .btn-add-heading:hover { border-color: #003B71; color: #003B71; background: #fff; }
 
     /* drag handle */
     .drag-handle {
@@ -360,12 +416,12 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: #1e293b;
+      background: #003B71;
       color: #fff;
       padding: 12px 18px;
       border-radius: 8px;
       font-size: 13px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+      box-shadow: 0 4px 16px rgba(0,59,113,0.3);
       z-index: 9999;
       opacity: 0;
       transform: translateY(10px);
@@ -374,7 +430,7 @@
       max-width: 360px;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
-    .toast.success { border-left: 4px solid #22c55e; }
+    .toast.success { border-left: 4px solid #00B4D8; }
     .toast.error   { border-left: 4px solid #ef4444; }
 
     #file-import { display: none; }
@@ -382,24 +438,24 @@
     .btn-load-prev {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: #f8fafc;
-      border: 1px dashed #93c5fd;
-      color: #3b82f6;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 13px;
+      gap: 4px;
+      background: #f0f9fc;
+      border: 1px solid #7dd3e8;
+      color: #0097b2;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
       transition: all 0.15s;
-      margin-bottom: 14px;
+      white-space: nowrap;
     }
-    .btn-load-prev:hover { background: #eff6ff; border-color: #3b82f6; color: #2563eb; }
+    .btn-load-prev:hover { background: #e6f7fb; border-color: #00B4D8; color: #007a94; }
 
     /* ── Settings modal ── */
-    .btn-settings { background: #475569; color: #e2e8f0; }
-    .btn-settings:hover { background: #64748b; }
+    .btn-settings { background: #1a5a9e; color: #e2e8f0; }
+    .btn-settings:hover { background: #246db5; }
     .settings-overlay {
       display: none;
       position: fixed;
@@ -460,14 +516,14 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      border: 1px solid #3b82f6;
-      background: #eff6ff;
-      color: #2563eb;
+      border: 1px solid #00B4D8;
+      background: #e6f7fb;
+      color: #007a94;
       font-family: inherit;
       transition: all 0.15s;
       white-space: nowrap;
     }
-    .btn-folder:hover { background: #dbeafe; }
+    .btn-folder:hover { background: #ccf0f7; }
     .btn-close-settings {
       padding: 8px 20px;
       border-radius: 6px;
@@ -475,13 +531,13 @@
       font-weight: 600;
       cursor: pointer;
       border: none;
-      background: #1e3a5f;
+      background: #003B71;
       color: #fff;
       font-family: inherit;
       transition: background 0.15s;
       margin-top: 8px;
     }
-    .btn-close-settings:hover { background: #2d4f7c; }
+    .btn-close-settings:hover { background: #024a8a; }
     .settings-note {
       font-size: 11px;
       color: #94a3b8;
@@ -507,14 +563,6 @@
 
 <header class="app-header">
   <h1>&#128203; 주간 보고</h1>
-  <div class="header-sep"></div>
-  <input type="number" id="inp-year" class="header-input" placeholder="2026" />
-  <span class="header-label">연도</span>
-  <input type="number" id="inp-month" class="header-input" min="1" max="12" placeholder="4" />
-  <span class="header-label">월</span>
-  <input type="number" id="inp-week" class="header-input" min="1" max="6" placeholder="3" />
-  <span class="header-label">주차</span>
-  <span class="report-date" id="report-date">보고 날짜: &#8212;</span>
   <span class="collab-badge" id="collab-badge">👥 동시작성중</span>
   <div class="spacer"></div>
   <span class="saved-badge" id="saved-badge">자동 저장</span>
@@ -524,9 +572,9 @@
   <button class="btn btn-primary" onclick="copyToClipboard()">&#128203; 클립보드 복사</button>
   <button class="btn btn-export" onclick="exportJSON()">&#8595; Export</button>
   <button class="btn btn-import" onclick="importFromFolder()">&#8593; Import</button>
-  <input type="file" id="file-import" accept=".json" onchange="importJSON(event)" />
   <button class="btn btn-settings" onclick="openSettings()">&#9881; Settings</button>
 </header>
+<input type="file" id="file-import" accept=".json" onchange="importJSON(event)" />
 <input type="file" id="file-prev-import" accept=".json" onchange="handlePrevWeekFile(event)" />
 
 <main class="content" id="content"></main>
@@ -562,7 +610,7 @@ var DEFAULT_HEADINGS = [
   { title: '0. \ud68c\uc758 \uc6b4\uc601', subheadings: [] },
   { title: '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d', subheadings: [] },
   { title: '2. \uc774\ubc88 \uc8fc \uacc4\ud68d', subheadings: [] },
-  { title: '3. \uae30\ud0c0 (\uad50\uc721, \ud734\uac00 \uc77c\uc815)', subheadings: [] }
+  { title: '3. \uae30\ud0c0', subheadings: [] }
 ];
 
 var STORAGE_KEY = 'weeklyReport_v2';
@@ -874,36 +922,90 @@ function updateReportDate() {
 
 /* ── RENDER ── */
 function renderAll() {
-  syncHeader();
-  updateReportDate();
   renderContent();
 }
 
 function syncHeader() {
-  document.getElementById('inp-year').value = state.year || '';
-  document.getElementById('inp-month').value = state.month || '';
-  document.getElementById('inp-week').value = state.week || '';
+  var y = document.getElementById('inp-year');
+  var m = document.getElementById('inp-month');
+  var w = document.getElementById('inp-week');
+  if (y) y.value = state.year || '';
+  if (m) m.value = state.month || '';
+  if (w) w.value = state.week || '';
 }
 
 function renderContent() {
+  ensureFixedHeadings();
   var el = document.getElementById('content');
-  var html = '<button class="btn-load-prev" onclick="loadPrevWeek()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ub0b4\uc6a9 \ubd88\ub7ec\uc624\uae30</button>';
+  var html = '<div class="content-date-bar">'
+    + '<input type="number" id="inp-year" class="header-input" placeholder="2026" value="' + (state.year || '') + '" />'
+    + '<span class="header-label">\ub144</span>'
+    + '<input type="number" id="inp-month" class="header-input" min="1" max="12" placeholder="4" value="' + (state.month || '') + '" />'
+    + '<span class="header-label">\uc6d4</span>'
+    + '<input type="number" id="inp-week" class="header-input" min="1" max="6" placeholder="3" value="' + (state.week || '') + '" />'
+    + '<span class="header-label">\uc8fc\ucc28</span>'
+    + '<button class="btn-load-prev" onclick="loadPrevWeek()">\ud83d\udcc2 \uc9c0\ub09c\uc8fc \ubd88\ub7ec\uc624\uae30</button>'
+    + '<span class="report-date" id="report-date">\ubcf4\uace0 \ub0a0\uc9dc: \u2014</span>'
+    + '</div>';
   state.headings.forEach(function(h, hi) {
     html += renderHeading(h, hi);
   });
   html += '<button class="btn-add-heading" onclick="addHeading()">+ \ub300\uc81c\ubaa9 \ucd94\uac00</button>';
   el.innerHTML = html;
   resizeAllTextareas();
+  updateReportDate();
+}
+
+function ensureFixedHeadings() {
+  // 5월 2주차 이후에만 적용
+  var key = (state.year || 0) * 100 + (state.month || 0);
+  var threshold = 2026 * 100 + 5;
+  if (key < threshold) return;
+  if (key === threshold && (state.week || 0) < 2) return;
+
+  var required = [
+    '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d',
+    '2. \uc774\ubc88 \uc8fc \uacc4\ud68d',
+    '3. \uae30\ud0c0'
+  ];
+  required.forEach(function(title) {
+    var exists = state.headings.some(function(h) { return h.title.trim() === title; });
+    if (!exists) {
+      state.headings.push({ title: title, subheadings: [] });
+    }
+  });
+}
+
+function isFixedHeading(title) {
+  if (!title) return false;
+  // 26년 5월 2주차 이후에만 적용
+  var key = (state.year || 0) * 100 + (state.month || 0);
+  var threshold = 2026 * 100 + 5; // 2026년 5월
+  if (key < threshold) return false;
+  if (key === threshold && (state.week || 0) < 2) return false;
+  var t = title.trim();
+  return t === '1. \uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d' ||
+         t === '2. \uc774\ubc88 \uc8fc \uacc4\ud68d' ||
+         t === '3. \uae30\ud0c0';
+}
+
+function isLastWeekHeading(title) {
+  if (!title) return false;
+  return title.indexOf('\uc9c0\ub09c') !== -1 && title.indexOf('\uc9c4\ud589') !== -1;
 }
 
 function renderHeading(h, hi) {
+  var fixed = isFixedHeading(h.title);
+  var readonlyAttr = fixed ? ' readonly' : '';
+  var oninputAttr = fixed ? '' : ' oninput="updateHeadingTitle(' + hi + ', this.value)"';
+  var deleteBtn = fixed ? '' : '<button class="btn-icon" onclick="deleteHeading(' + hi + ')" title="\ub300\uc81c\ubaa9 \uc0ad\uc81c">\xd7</button>';
   return '<div class="heading-block" id="heading-' + hi + '" ondragover="event.preventDefault()" ondrop="headingDrop(' + hi + ',event)">'
     + '<div class="heading-header" draggable="true" ondragstart="headingDragStart(' + hi + ',event)">'
     + '<span class="drag-handle">\u283f</span>'
     + '<input type="text" class="heading-input" value="' + escAttr(h.title) + '"'
     + ' placeholder="\ub300\uc81c\ubaa9\uc744 \uc785\ub825\ud558\uc138\uc694"'
-    + ' oninput="updateHeadingTitle(' + hi + ', this.value)" />'
-    + '<button class="btn-icon" onclick="deleteHeading(' + hi + ')" title="\ub300\uc81c\ubaa9 \uc0ad\uc81c">\xd7</button>'
+    + readonlyAttr + oninputAttr + ' />'
+    + deleteBtn
     + '</div>'
     + '<div class="heading-body">'
     + h.subheadings.map(function(sub, si) { return renderSubheading(hi, sub, si); }).join('')
@@ -941,6 +1043,10 @@ function renderTask(hi, si, task, ti) {
   var subtaskHtml = subtasks.map(function(st, sti) {
     return renderSubtask(hi, si, ti, st, sti);
   }).join('');
+  var heading = state.headings[hi];
+  var sendBtn = isLastWeekHeading(heading.title)
+    ? '<button class="btn-send-to-plan" onclick="sendTaskToPlan(' + hi + ',' + si + ',' + ti + ')" title="\uc774\ubc88\uc8fc\ub85c \ubcf4\ub0b4\uae30">\u27a1\ufe0f</button>'
+    : '';
   return '<div class="task-group" id="taskgroup-' + hi + '-' + si + '-' + ti + '">'
     + '<div class="task-row" id="task-' + hi + '-' + si + '-' + ti + '">'
     + '<span style="font-size:12px;color:#94a3b8;font-weight:600;min-width:20px;padding-top:6px;flex-shrink:0;">' + (ti + 1) + '.</span>'
@@ -950,6 +1056,7 @@ function renderTask(hi, si, task, ti) {
     + ' onkeydown="taskKeyDown(event,' + hi + ',' + si + ',' + ti + ')">'
     + escHtml(task.text)
     + '</textarea>'
+    + sendBtn
     + '<button class="btn-delete-task" onclick="deleteTask(' + hi + ',' + si + ',' + ti + ')" title="\uc0ad\uc81c">\xd7</button>'
     + '</div>'
     + '<div class="subtask-list" id="subtasks-' + hi + '-' + si + '-' + ti + '">'
@@ -1167,27 +1274,71 @@ function deleteSubtask(hi, si, ti, sti) {
   scheduleSave();
 }
 
+/* ── SEND TASK TO PLAN ── */
+function sendTaskToPlan(hi, si, ti) {
+  var task = state.headings[hi].subheadings[si].tasks[ti];
+  if (!task) return;
+  // \uc774\ubc88 \uc8fc \uacc4\ud68d \ud5e4\ub529 \ucc3e\uae30
+  var planIdx = -1;
+  for (var i = 0; i < state.headings.length; i++) {
+    var t = state.headings[i].title || '';
+    if (t.indexOf('\uc774\ubc88') !== -1 && t.indexOf('\uacc4\ud68d') !== -1) {
+      planIdx = i;
+      break;
+    }
+  }
+  if (planIdx === -1) {
+    showToast('\u274c "\uc774\ubc88 \uc8fc \uacc4\ud68d" \ub300\uc81c\ubaa9\uc744 \ucc3e\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.', 'error');
+    return;
+  }
+  pushHistory();
+  // \uac19\uc740 \uc18c\uc81c\ubaa9\uc774 \uc788\ub294\uc9c0 \ud655\uc778
+  var subTitle = state.headings[hi].subheadings[si].title;
+  var targetSubIdx = -1;
+  for (var j = 0; j < state.headings[planIdx].subheadings.length; j++) {
+    if (state.headings[planIdx].subheadings[j].title === subTitle) {
+      targetSubIdx = j;
+      break;
+    }
+  }
+  var copiedTask = JSON.parse(JSON.stringify(task));
+  if (targetSubIdx === -1) {
+    // \uc18c\uc81c\ubaa9 \uc0c8\ub85c \uc0dd\uc131
+    var newSub = {
+      title: subTitle,
+      assignee: state.headings[hi].subheadings[si].assignee || '',
+      tasks: [copiedTask]
+    };
+    state.headings[planIdx].subheadings.push(newSub);
+  } else {
+    state.headings[planIdx].subheadings[targetSubIdx].tasks.push(copiedTask);
+  }
+  renderContent();
+  scheduleSave();
+  showToast('\u2705 "\uc774\ubc88 \uc8fc \uacc4\ud68d"\uc73c\ub85c \ubcf4\ub0c4', 'success');
+}
+
 /* ── HEADER INPUTS ── */
-document.getElementById('inp-year').addEventListener('input', function () {
-  state.year = parseInt(this.value) || '';
-  updateReportDate();
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-  lastSavedJSON = '';
-  subscribeToReport();
-});
-document.getElementById('inp-month').addEventListener('input', function () {
-  state.month = parseInt(this.value) || '';
-  updateReportDate();
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-  lastSavedJSON = '';
-  subscribeToReport();
-});
-document.getElementById('inp-week').addEventListener('input', function () {
-  state.week = parseInt(this.value) || '';
-  updateReportDate();
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-  lastSavedJSON = '';
-  subscribeToReport();
+document.getElementById('content').addEventListener('input', function(e) {
+  if (e.target.id === 'inp-year') {
+    state.year = parseInt(e.target.value) || '';
+    updateReportDate();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(ex) {}
+    lastSavedJSON = '';
+    subscribeToReport();
+  } else if (e.target.id === 'inp-month') {
+    state.month = parseInt(e.target.value) || '';
+    updateReportDate();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(ex) {}
+    lastSavedJSON = '';
+    subscribeToReport();
+  } else if (e.target.id === 'inp-week') {
+    state.week = parseInt(e.target.value) || '';
+    updateReportDate();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(ex) {}
+    lastSavedJSON = '';
+    subscribeToReport();
+  }
 });
 
 /* ── EXPORT / IMPORT ── */
@@ -1209,15 +1360,28 @@ function exportJSON() {
         showToast('\u274c \ud3f4\ub354 \uad8c\ud55c\uc774 \uac70\ubd80\ub418\uc5c8\uc2b5\ub2c8\ub2e4. Settings\uc5d0\uc11c \ub2e4\uc2dc \uc120\ud0dd\ud558\uc138\uc694.', 'error');
         return;
       }
-      return dirHandle.getFileHandle(filename, { create: true }).then(function(fh) {
-        return fh.createWritable();
-      }).then(function(writable) {
-        return writable.write(json).then(function() { return writable.close(); });
-      }).then(function() {
-        showToast('\u2705 ' + dirHandle.name + '/' + filename + ' \uc800\uc7a5\ub428', 'success');
+      // 같은 이름의 파일이 있는지 확인
+      return dirHandle.getFileHandle(filename).then(function() {
+        // 파일이 존재함
+        if (!confirm('"' + filename + '" \ud30c\uc77c\uc774 \uc774\ubbf8 \uc874\uc7ac\ud569\ub2c8\ub2e4.\n\ub36e\uc5b4\uc4f0\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) return;
+        return dirHandle.getFileHandle(filename, { create: true });
+      }).catch(function(e) {
+        // 파일이 없으면 NotFoundError -> 새로 생성
+        if (e && e.name === 'NotFoundError') {
+          return dirHandle.getFileHandle(filename, { create: true });
+        }
+        throw e;
       });
+    }).then(function(fh) {
+      if (!fh) return;
+      return fh.createWritable();
+    }).then(function(writable) {
+      if (!writable) return;
+      return writable.write(json).then(function() { return writable.close(); });
+    }).then(function() {
+      showToast('\u2705 ' + dirHandle.name + '/' + filename + ' \uc800\uc7a5\ub428', 'success');
     }).catch(function(err) {
-      showToast('\u274c \ud30c\uc77c \uc800\uc7a5 \uc2e4\ud328: ' + err.message, 'error');
+      if (err) showToast('\u274c \ud30c\uc77c \uc800\uc7a5 \uc2e4\ud328: ' + err.message, 'error');
     });
     return;
   }
@@ -1479,6 +1643,19 @@ function loadPrevWeekPlan(prev) {
     }
   }
 
+  // 2. 이번 주 계획 비우기
+  var planIdx = -1;
+  for (var p = 0; p < state.headings.length; p++) {
+    var pt = state.headings[p].title || '';
+    if (pt.indexOf('\uc774\ubc88') !== -1 && pt.indexOf('\uacc4\ud68d') !== -1) {
+      planIdx = p;
+      break;
+    }
+  }
+  if (planIdx !== -1) {
+    state.headings[planIdx].subheadings = [];
+  }
+
   renderContent();
   commitSave();
   showToast('\u2705 \uc9c0\ub09c\uc8fc "\uc774\ubc88 \uc8fc \uacc4\ud68d" \u2192 "\uc9c0\ub09c \uc8fc \uc9c4\ud589 \uc0ac\ud56d" \ubd88\ub7ec\uc634', 'success');
@@ -1490,15 +1667,29 @@ function importJSON(event) {
   var reader = new FileReader();
   reader.onload = function (e) {
     try {
-      var data = JSON.parse(e.target.result);
+      var text = e.target.result;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      var data = JSON.parse(text);
       if (!data || !Array.isArray(data.headings)) {
         showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON \ud30c\uc77c\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
         return;
       }
       state = data;
       renderAll();
-      commitSave();
-      subscribeToReport();
+      var json = JSON.stringify(state);
+      lastSavedJSON = json;
+      try { localStorage.setItem(STORAGE_KEY, json); } catch(ex) {}
+      var path = getDbPath();
+      if (path) {
+        db.ref(path).set(state).then(function() {
+          subscribeToReport();
+          flashSavedBadge('\ud074\ub77c\uc6b0\ub4dc \uc800\uc7a5 \u2713');
+        }).catch(function() {
+          subscribeToReport();
+        });
+      } else {
+        subscribeToReport();
+      }
       showToast('\u2705 \ubd88\ub7ec\uc624\uae30 \uc644\ub8cc', 'success');
     } catch (err) {
       showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + err.message, 'error');
@@ -1554,30 +1745,64 @@ function showImportPickerModal(fileHandles) {
   overlay.addEventListener('click', function(e) { if (e.target === overlay) document.body.removeChild(overlay); });
   panel.querySelector('#imp-cancel').onclick = function() { document.body.removeChild(overlay); };
   var list = panel.querySelector('#import-list');
-  fileHandles.forEach(function(fh) {
-    var btn = document.createElement('button');
-    btn.textContent = fh.name;
-    btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
-    btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
-    btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
-    btn.onclick = function() {
-      fh.getFile().then(function(file) { return file.text(); }).then(function(text) {
-        var data = JSON.parse(text);
-        if (!data || !Array.isArray(data.headings)) {
-          showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
-          return;
-        }
-        state = data;
-        renderAll();
-        commitSave();
-        subscribeToReport();
-        showToast('\u2705 ' + fh.name + ' \ubd88\ub7ec\uc624\uae30 \uc644\ub8cc', 'success');
-        document.body.removeChild(overlay);
-      }).catch(function(err) {
-        showToast('\u274c \ud30c\uc77c \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
-      });
-    };
-    list.appendChild(btn);
+
+  // FileHandle에서 미리 File 객체를 얻어서 사용
+  var filePromises = fileHandles.map(function(fh) {
+    return fh.getFile().then(function(file) {
+      return { name: fh.name, file: file };
+    }).catch(function() { return null; });
+  });
+
+  Promise.all(filePromises).then(function(files) {
+    files = files.filter(Boolean);
+    if (files.length === 0) {
+      showToast('\u274c \ud30c\uc77c\uc744 \uc77d\uc744 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ud3f4\ub354 \uad8c\ud55c\uc744 \ud655\uc778\ud558\uc138\uc694.', 'error');
+      document.body.removeChild(overlay);
+      return;
+    }
+    files.forEach(function(item) {
+      var btn = document.createElement('button');
+      btn.textContent = item.name;
+      btn.style.cssText = 'display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;font-size:13px;color:#1e293b;font-family:inherit;transition:all 0.15s;';
+      btn.onmouseenter = function() { btn.style.background = '#eff6ff'; btn.style.borderColor = '#93c5fd'; };
+      btn.onmouseleave = function() { btn.style.background = '#f8fafc'; btn.style.borderColor = '#e2e8f0'; };
+      btn.onclick = function() {
+        item.file.text().then(function(text) {
+          // BOM 제거
+          if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+          var data;
+          try { data = JSON.parse(text); } catch(parseErr) {
+            showToast('\u274c JSON \ud30c\uc2f1 \uc624\ub958: ' + parseErr.message, 'error');
+            return;
+          }
+          if (!data || !Array.isArray(data.headings)) {
+            showToast('\u274c \uc62c\ubc14\ub978 \uc8fc\uac04\ubcf4\uace0 JSON\uc774 \uc544\ub2d9\ub2c8\ub2e4.', 'error');
+            return;
+          }
+          state = data;
+          renderAll();
+          var json = JSON.stringify(state);
+          lastSavedJSON = json;
+          try { localStorage.setItem(STORAGE_KEY, json); } catch(ex) {}
+          var path = getDbPath();
+          if (path) {
+            db.ref(path).set(state).then(function() {
+              subscribeToReport();
+              flashSavedBadge('\ud074\ub77c\uc6b0\ub4dc \uc800\uc7a5 \u2713');
+            }).catch(function() {
+              subscribeToReport();
+            });
+          } else {
+            subscribeToReport();
+          }
+          showToast('\u2705 ' + item.name + ' \ubd88\ub7ec\uc624\uae30 \uc644\ub8cc', 'success');
+          if (overlay.parentNode) document.body.removeChild(overlay);
+        }).catch(function(err) {
+          showToast('\u274c \ud30c\uc77c \uc77d\uae30 \uc2e4\ud328: ' + err.message, 'error');
+        });
+      };
+      list.appendChild(btn);
+    });
   });
 }
 
@@ -1613,9 +1838,7 @@ function buildExportHTML() {
         + escHtml(sub.title) + assigneeStr + '</h4>';
       html += '<ol style="margin:0 0 6px 0;padding-left:22px;font-size:13px;">';
       sub.tasks.forEach(function(t) {
-        var c = STATUS_COLOR[t.status] || STATUS_COLOR['\uc608\uc815'];
-        var statusBadge = ' <span style="font-size:11px;color:' + c.text + ';font-weight:700;">- ' + escHtml(t.status) + '</span>';
-        html += '<li style="margin-bottom:3px;">' + escHtml(t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + statusBadge;
+        html += '<li style="margin-bottom:3px;">' + escHtml(t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)');
         if (t.subtasks && t.subtasks.length > 0) {
           html += '<ul style="margin:2px 0 2px 0;padding-left:18px;font-size:12px;color:#475569;">';
           t.subtasks.forEach(function(st) {
@@ -1651,7 +1874,7 @@ function buildExportPlainText() {
       var taskNum = 0;
       sub.tasks.forEach(function(t) {
         taskNum++;
-        text += '  ' + taskNum + '. ' + (t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + ' - ' + t.status + '\n';
+        text += '  ' + taskNum + '. ' + (t.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + '\n';
         if (t.subtasks && t.subtasks.length > 0) {
           t.subtasks.forEach(function(st) {
             text += '    - ' + (st.text || '(\ub0b4\uc6a9 \uc5c6\uc74c)') + ' - ' + (st.status || '\uc608\uc815') + '\n';
